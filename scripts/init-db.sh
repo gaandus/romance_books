@@ -13,6 +13,7 @@ npx prisma migrate deploy
 # Import initial data if it exists
 if [ -f "/app/data/scraped_books_details.csv" ]; then
   echo "Importing initial data..."
+  cd /app
   npx ts-node src/scripts/import-data.ts
 fi
 
