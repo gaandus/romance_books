@@ -5,6 +5,26 @@ import { join } from 'path';
 
 const prisma = new PrismaClient();
 
+interface BookRecord {
+  id: string;
+  title: string;
+  url: string;
+  title_scraped: string;
+  author_scraped: string;
+  series_name?: string;
+  series_number?: string;
+  rating?: string;
+  num_ratings?: string;
+  pages?: string;
+  published_date?: string;
+  spice_level?: string;
+  summary?: string;
+  filters?: string;
+  tags?: string;
+  content_warnings?: string;
+  scraped_status?: string;
+}
+
 async function main() {
   try {
     const csvPath = join(process.cwd(), 'data', 'scraped_books_details.csv');
@@ -14,7 +34,7 @@ async function main() {
     const records = parse(fileContent, {
       columns: true,
       skip_empty_lines: true,
-    });
+    }) as BookRecord[];
 
     console.log(`Found ${records.length} records to import`);
 
@@ -35,9 +55,21 @@ async function main() {
             publishedDate: record.published_date ? new Date(record.published_date) : null,
             spiceLevel: record.spice_level || null,
             summary: record.summary || null,
-            filters: record.filters ? record.filters.split(',').map(f => f.trim()) : [],
-            tags: record.tags || null,
-            contentWarnings: record.content_warnings || null,
+            filters: record.filters ? {
+              create: record.filters.split(',').map((f: string) => ({
+                name: f.trim()
+              }))
+            } : undefined,
+            tags: record.tags ? {
+              create: record.tags.split(',').map((t: string) => ({
+                name: t.trim()
+              }))
+            } : undefined,
+            contentWarnings: record.content_warnings ? {
+              create: record.content_warnings.split(',').map((w: string) => ({
+                name: w.trim()
+              }))
+            } : undefined,
             scrapedStatus: record.scraped_status || null,
           },
         });
