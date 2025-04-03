@@ -1,0 +1,77 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  preferences   Json     @default("{}")
+  readBooks     String[] @default([])
+  notInterested String[] @default([])
+}
+
+model Book {
+  id              String           @id
+  title           String
+  author          String           @map("author")
+  series          String?          @map("series")
+  seriesNumber    Int?
+  averageRating   Float            @map("averageRating")
+  ratingsCount    Int              @map("ratingsCount")
+  pageCount       Int?             @map("pageCount")
+  publishedDate   DateTime?
+  summary         String
+  spiceLevel      String?          @db.VarChar(20)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  url             String
+  scrapedStatus   String?
+  contentWarnings ContentWarning[] @relation("BookToContentWarning")
+  filters         Filter[]         @relation("BookToFilter")
+  tags            Tag[]            @relation("BookToTag")
+
+  @@index([title])
+  @@index([author])
+  @@index([averageRating])
+  @@index([spiceLevel])
+  @@index([averageRating, ratingsCount])
+  @@index([series])
+  @@index([publishedDate])
+}
+
+model Tag {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  count     Int      @default(1)
+  books     Book[]   @relation("BookToTag")
+
+  @@index([name])
+}
+
+model Filter {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  count     Int      @default(1)
+  books     Book[]   @relation("BookToFilter")
+}
+
+model ContentWarning {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  count     Int      @default(1)
+  books     Book[]   @relation("BookToContentWarning")
+
+  @@index([name])
+}

@@ -1,0 +1,175 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 280 30% 98%;
+    --foreground: 280 20% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 280 20% 20%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 280 20% 20%;
+    --primary: 330 80% 60%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 280 40% 96%;
+    --secondary-foreground: 280 20% 20%;
+    --muted: 280 20% 96%;
+    --muted-foreground: 280 20% 40%;
+    --accent: 280 40% 96%;
+    --accent-foreground: 280 20% 20%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 280 20% 90%;
+    --input: 280 20% 90%;
+    --ring: 330 80% 60%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    border-color: hsl(var(--border));
+  }
+  body {
+    background: linear-gradient(135deg, hsl(var(--background)), hsl(var(--primary) / 0.1));
+    min-height: 100vh;
+    color: hsl(var(--foreground));
+  }
+  
+  h1 {
+    @apply text-3xl font-bold mb-6;
+    color: hsl(var(--primary));
+    text-shadow: 0 2px 4px hsl(var(--primary) / 0.2);
+  }
+  
+  h2 {
+    @apply text-2xl font-semibold mb-4;
+    color: hsl(var(--primary));
+    text-shadow: 0 2px 4px hsl(var(--primary) / 0.2);
+  }
+  
+  h3 {
+    @apply text-xl font-medium mb-3;
+    color: hsl(var(--primary));
+    text-shadow: 0 2px 4px hsl(var(--primary) / 0.2);
+  }
+
+  input {
+    @apply bg-white text-gray-900 placeholder:text-gray-500;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-colors;
+  }
+  
+  .btn-primary {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    @apply shadow-md hover:shadow-lg;
+  }
+  
+  .btn-primary:hover {
+    background-color: hsl(var(--primary) / 0.9);
+  }
+  
+  .btn-secondary {
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground));
+    @apply shadow-md hover:shadow-lg;
+  }
+  
+  .btn-secondary:hover {
+    background-color: hsl(var(--secondary) / 0.9);
+  }
+  
+  .btn-destructive {
+    background-color: hsl(var(--destructive));
+    color: hsl(var(--destructive-foreground));
+    @apply shadow-md hover:shadow-lg;
+  }
+  
+  .btn-destructive:hover {
+    background-color: hsl(var(--destructive) / 0.9);
+  }
+  
+  .btn-outline {
+    border: 1px solid hsl(var(--input));
+    background-color: transparent;
+    @apply shadow-md hover:shadow-lg;
+  }
+  
+  .btn-outline:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+  
+  .btn-ghost:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+  
+  .btn-link {
+    color: hsl(var(--primary));
+    @apply underline-offset-4 hover:underline;
+  }
+  
+  .card {
+    background-color: hsl(var(--card));
+    color: hsl(var(--card-foreground));
+    @apply rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-300 backdrop-blur-sm bg-opacity-90 border;
+    border-color: hsl(var(--border));
+  }
+  
+  .card:hover {
+    border-color: hsl(var(--primary) / 0.5);
+  }
+
+  .spice-level {
+    @apply inline-flex items-center gap-1 text-sm;
+  }
+
+  .spice-level[data-level="1"]::before {
+    content: "🔥";
+  }
+
+  .spice-level[data-level="2"]::before {
+    content: "🔥🔥";
+  }
+
+  .spice-level[data-level="3"]::before {
+    content: "🔥🔥🔥";
+  }
+
+  .spice-level[data-level="4"]::before {
+    content: "🔥🔥🔥🔥";
+  }
+
+  .spice-level[data-level="5"]::before {
+    content: "🔥🔥🔥🔥🔥";
+  }
+
+  @media (max-width: 640px) {
+    .card {
+      @apply p-4 mx-4;
+    }
+    
+    h1 {
+      @apply text-2xl px-4;
+    }
+    
+    h2 {
+      @apply text-xl px-4;
+    }
+    
+    h3 {
+      @apply text-lg px-4;
+    }
+
+    .btn {
+      @apply w-full;
+    }
+  }
+} 
