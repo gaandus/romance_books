@@ -68,8 +68,7 @@ Thumbs.db
 
 # data files
 *.csv
-!package.json
-!package-lock.json
+!data/split/*.csv
 *.txt
 *.py
 *.ipynb
@@ -85,4 +84,5 @@ Thumbs.db
 
 # data directory
 /data/
+!/data/split/
 /scraped_response/ 
