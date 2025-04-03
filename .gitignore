@@ -70,7 +70,6 @@ Thumbs.db
 *.csv
 *.json
 *.txt
-*.md
 *.py
 *.ipynb
 *.db
