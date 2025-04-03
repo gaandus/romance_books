@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=romance
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=romance
+    volumes:
+      - romance-db-data:/var/lib/postgresql/data
+    networks:
+      - romance-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U romance"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.prod
+    ports:
+      - "3003:3000"
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://romance:${DB_PASSWORD}@db:5432/romance
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - romance-network
+
+networks:
+  romance-network:
+    driver: bridge
+
+volumes:
+  romance-db-data: 
