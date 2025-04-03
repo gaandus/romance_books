@@ -21,10 +21,9 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.prod
-    command: sh -c "ls -la /app/scripts && chmod +x /app/scripts/init-db.sh && /app/scripts/init-db.sh"
+    command: sh -c "pwd && ls -la /app/scripts && echo 'Running init-db.sh...' && /bin/sh /app/scripts/init-db.sh"
     volumes:
       - ../data:/app/data
-      - ../scripts:/app/scripts
     environment:
       - DATABASE_URL=postgresql://romance:${DB_PASSWORD}@db:5432/romance
     env_file:
