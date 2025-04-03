@@ -6,7 +6,8 @@ WORKDIR /app
 # Copy all files first to ensure package.json is available
 COPY . .
 
-# Debug: List scripts directory
+# Debug: List all files
+RUN ls -la
 RUN ls -la scripts/
 
 # Install dependencies
@@ -31,8 +32,10 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/package-lock.json ./
 COPY --from=builder /app/scripts ./scripts
 
-# Debug: List copied scripts directory
+# Debug: List all files and scripts
+RUN ls -la
 RUN ls -la scripts/
+RUN find . -name "init-db.sh"
 
 # Make scripts executable
 RUN chmod +x scripts/init-db.sh
