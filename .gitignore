@@ -79,8 +79,11 @@ Thumbs.db
 /prisma/migrations/
 
 # scripts
-/src/scripts/
-/scripts/
+/scripts/*.ts
+/scripts/*.tsx
+/scripts/*.js
+/scripts/*.jsx
+!src/scripts/import-data.ts
 
 # data directory
 /data/scraped_books_details.csv
