@@ -27,7 +27,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://romance:${DB_PASSWORD}@db:5432/romance
     env_file:
-      - .env
+      - ../.env
     depends_on:
       db:
         condition: service_healthy
@@ -45,7 +45,7 @@ services:
       - DATABASE_URL=postgresql://romance:${DB_PASSWORD}@db:5432/romance
       - OPENAI_API_KEY=${OPENAI_API_KEY}
     env_file:
-      - .env
+      - ../.env
     depends_on:
       init-db:
         condition: service_completed_successfully
