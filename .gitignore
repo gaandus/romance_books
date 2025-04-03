@@ -68,7 +68,8 @@ Thumbs.db
 
 # data files
 *.csv
-*.json
+!package.json
+!package-lock.json
 *.txt
 *.py
 *.ipynb
