@@ -30,8 +30,9 @@ COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/src ./src
 
-# Make scripts executable
+# Make scripts and ts-node executable
 RUN chmod +x scripts/init-db.sh
+RUN chmod +x node_modules/.bin/ts-node
 
 # Set environment variables
 ENV NODE_ENV=production

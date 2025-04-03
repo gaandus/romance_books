@@ -8,6 +8,7 @@ done
 
 # Run Prisma migrations
 echo "Running database migrations..."
+npx prisma migrate dev --name init --create-only
 npx prisma migrate deploy
 
 # Import initial data if it exists
