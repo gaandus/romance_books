@@ -83,7 +83,5 @@ Thumbs.db
 /scripts/
 
 # data directory
-/data/*
-!/data/split/
-!/data/split/*.csv
+/data/scraped_books_details.csv
 /scraped_response/ 
