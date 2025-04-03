@@ -38,7 +38,7 @@ RUN ls -la scripts/
 RUN find . -name "init-db.sh"
 
 # Make scripts executable
-RUN chmod +x scripts/init-db.sh
+RUN chmod +x /app/scripts/init-db.sh
 
 # Install production dependencies
 RUN npm install --production
