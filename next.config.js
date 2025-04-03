@@ -15,9 +15,7 @@ const nextConfig = {
 
   // Optimize build performance
   experimental: {
-    optimizeCss: true,
-    optimizePackageImports: ['react', 'react-dom'],
-    serverComponentsExternalPackages: ['@prisma/client'],
+    optimizeCss: false,
   },
 
   // Optimize bundle size
@@ -56,6 +54,19 @@ const nextConfig = {
       };
     }
 
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      '@': `${__dirname}/src`,
+      '@/lib': `${__dirname}/src/lib`,
+      '@/types': `${__dirname}/src/types`,
+      '@/app/utils': `${__dirname}/src/app/utils`,
+    };
+
+    // Disable critters for now
+    config.optimization.minimizer = config.optimization.minimizer.filter(
+      (minimizer) => minimizer.constructor.name !== 'Critters'
+    );
+
     return config;
   },
 
@@ -65,6 +76,7 @@ const nextConfig = {
   // Optimize static generation
   generateEtags: false,
   poweredByHeader: false,
+  output: 'standalone',
 }
 
 module.exports = nextConfig 

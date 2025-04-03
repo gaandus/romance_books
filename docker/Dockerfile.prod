@@ -8,7 +8,6 @@ COPY package*.json ./
 RUN rm -rf node_modules package-lock.json
 RUN npm install
 RUN npm install --save-dev @types/csv-parse
-RUN npm install postcss-media-query-parser postcss-normalize-whitespace --save-dev
 
 # Copy source code
 COPY . .
