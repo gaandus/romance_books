@@ -61,18 +61,21 @@ async function main() {
           spiceLevel: record.spice_level || null,
           summary: record.summary || null,
           filters: record.filters ? {
-            create: record.filters.split(',').map((f: string) => ({
-              name: f.trim()
+            connectOrCreate: record.filters.split(',').map((f: string) => ({
+              where: { name: f.trim() },
+              create: { name: f.trim() }
             }))
           } : undefined,
           tags: record.tags ? {
-            create: record.tags.split(',').map((t: string) => ({
-              name: t.trim()
+            connectOrCreate: record.tags.split(',').map((t: string) => ({
+              where: { name: t.trim() },
+              create: { name: t.trim() }
             }))
           } : undefined,
           contentWarnings: record.content_warnings ? {
-            create: record.content_warnings.split(',').map((w: string) => ({
-              name: w.trim()
+            connectOrCreate: record.content_warnings.split(',').map((w: string) => ({
+              where: { name: w.trim() },
+              create: { name: w.trim() }
             }))
           } : undefined,
           scrapedStatus: record.scraped_status || null,
