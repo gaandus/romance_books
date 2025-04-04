@@ -21,6 +21,10 @@ const nextConfig = {
     optimizeCss: false,
   },
 
+  // Ensure proper handling of base URL
+  basePath: '',
+  assetPrefix: '',
+
   // Optimize bundle size
   webpack: (config, { dev, isServer }) => {
     // Exclude unnecessary files
@@ -74,7 +78,19 @@ const nextConfig = {
   // Optimize static generation
   generateEtags: false,
   poweredByHeader: false,
-  output: 'standalone',
+
+  // Ensure proper handling of trailing slashes
+  trailingSlash: false,
+
+  // Ensure proper handling of rewrites
+  async rewrites() {
+    return [
+      {
+        source: '/:path*',
+        destination: '/:path*',
+      },
+    ];
+  },
 }
 
 module.exports = nextConfig 
