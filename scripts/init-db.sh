@@ -1,21 +1,15 @@
-#!/bin/bash
+#!/bin/sh
 
-# Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL to be ready..."
-while ! pg_isready -h db -U romance -d romance; do
-  sleep 1
+while ! nc -z db 5432; do
+  sleep 0.1
 done
+echo "PostgreSQL is ready!"
 
-# Run Prisma migrations
-echo "Running database migrations..."
-npx prisma migrate dev --name init --create-only
+echo "Running migrations..."
 npx prisma migrate deploy
 
-# Import initial data if it exists
-if [ -f "/app/data/scraped_books_details.csv" ]; then
-  echo "Importing initial data..."
-  cd /app
-  npx ts-node --project tsconfig.json src/scripts/import-data.ts
-fi
+echo "Importing initial data..."
+npx ts-node src/scripts/import-data.ts
 
 echo "Database initialization complete!" 
