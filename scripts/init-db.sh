@@ -10,6 +10,6 @@ echo "Running migrations..."
 npx prisma migrate deploy
 
 echo "Importing initial data..."
-npx ts-node src/scripts/import-data.ts
+node dist/scripts/import-data.js
 
 echo "Database initialization complete!" 

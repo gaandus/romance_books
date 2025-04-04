@@ -19,7 +19,7 @@ COPY .npmrc ./
 
 # Install dependencies
 RUN npm install
-RUN npm install -g ts-node typescript @types/node
+RUN npm install -g typescript @types/node
 RUN npm install csv-parse
 
 # Copy source files
@@ -27,12 +27,12 @@ COPY src ./src
 COPY scripts ./scripts
 COPY data ./data
 
-# Generate Prisma client
+# Generate Prisma client and compile TypeScript
 RUN npx prisma generate
+RUN npx tsc src/scripts/import-data.ts --esModuleInterop --outDir dist
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV TS_NODE_PROJECT=tsconfig.json
 
 # Make scripts executable
 RUN chmod +x scripts/init-db.sh
