@@ -1,5 +1,5 @@
 # Build stage
-FROM node:18-alpine AS builder
+FROM node:18.19-alpine AS builder
 
 WORKDIR /app
 
@@ -7,8 +7,9 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies
-RUN npm install
+# Install dependencies with clean npm cache
+RUN npm cache clean --force
+RUN npm install --no-cache
 
 # Copy source code
 COPY . .
@@ -19,11 +20,15 @@ RUN npx prisma generate
 # Make scripts executable
 RUN chmod +x scripts/init-db.sh
 
+# Clean up any potential cache issues
+RUN rm -rf .next
+RUN rm -rf node_modules/.cache
+
 # Build the application
 RUN npm run build
 
 # Production stage
-FROM node:18-alpine AS runner
+FROM node:18.19-alpine AS runner
 
 WORKDIR /app
 
