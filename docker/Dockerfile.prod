@@ -3,12 +3,21 @@ FROM node:18.19-alpine AS builder
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and npm configuration
 COPY package*.json ./
+COPY .npmrc ./
 COPY prisma ./prisma/
 
-# Install dependencies with clean npm cache
-RUN npm cache clean --force
+# Install dependencies with specific versions
+RUN npm install --no-cache \
+    rimraf@latest \
+    glob@latest \
+    eslint@latest \
+    @typescript-eslint/parser@latest \
+    @typescript-eslint/eslint-plugin@latest \
+    lru-cache@latest
+
+# Install remaining dependencies
 RUN npm install --no-cache
 
 # Copy source code
@@ -34,6 +43,7 @@ WORKDIR /app
 
 # Copy necessary files from builder
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/.npmrc ./
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
