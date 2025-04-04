@@ -19,29 +19,31 @@ model User {
 model Book {
   id              String           @id
   title           String
-  author          String           @map("author")
-  series          String?          @map("series")
+  url             String
+  titleScraped    String?          @map("title_scraped")
+  authorScraped   String?          @map("author_scraped")
+  seriesName      String?          @map("series_name")
   seriesNumber    Int?
-  averageRating   Float            @map("averageRating")
-  ratingsCount    Int              @map("ratingsCount")
-  pageCount       Int?             @map("pageCount")
+  rating          Float?
+  numRatings      Int?             @map("num_ratings")
+  pages           Int?
   publishedDate   DateTime?
-  summary         String
-  spiceLevel      String?          @db.VarChar(20)
+  spiceLevel      String?          @map("spice_level") @db.VarChar(20)
+  summary         String?
+  scrapedStatus   String?          @map("scraped_status")
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  url             String
-  scrapedStatus   String?
   contentWarnings ContentWarning[] @relation("BookToContentWarning")
   filters         Filter[]         @relation("BookToFilter")
   tags            Tag[]            @relation("BookToTag")
 
   @@index([title])
-  @@index([author])
-  @@index([averageRating])
+  @@index([titleScraped])
+  @@index([authorScraped])
+  @@index([rating])
   @@index([spiceLevel])
-  @@index([averageRating, ratingsCount])
-  @@index([series])
+  @@index([rating, numRatings])
+  @@index([seriesName])
   @@index([publishedDate])
 }
 
