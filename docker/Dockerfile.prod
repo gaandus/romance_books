@@ -21,7 +21,7 @@ RUN npm install --no-cache \
     lru-cache@latest
 
 # Install project dependencies
-RUN npm install --no-cache
+RUN npm install --no-cache openai@4.28.0
 
 # Copy the rest of the application
 COPY . .
