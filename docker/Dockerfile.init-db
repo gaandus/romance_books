@@ -1,8 +1,8 @@
 # Use Node.js 20 Alpine as base
 FROM node:20-alpine
 
-# Install PostgreSQL client tools
-RUN apk add --no-cache postgresql-client netcat-openbsd
+# Install PostgreSQL client tools and bash
+RUN apk add --no-cache postgresql-client netcat-openbsd bash
 
 # Set working directory
 WORKDIR /app
@@ -32,4 +32,4 @@ ENV NODE_ENV=production
 RUN chmod +x scripts/init-db.sh
 
 # Command to run the initialization script
-CMD ["sh", "scripts/init-db.sh"] 
+CMD ["bash", "scripts/init-db.sh"] 
