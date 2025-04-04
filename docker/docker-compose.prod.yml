@@ -21,7 +21,7 @@ services:
     build:
       context: ..
       dockerfile: docker/Dockerfile.init-db
-    command: sh -c "ls -la /app/scripts && /app/scripts/init-db.sh"
+    command: sh -c "ls -la /app/scripts && cd /app && bash scripts/init-db.sh"
     volumes:
       - ../data:/app/data
     environment:
