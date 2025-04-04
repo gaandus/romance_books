@@ -1,35 +1,35 @@
 # Use Node.js 20 Alpine as base
 FROM node:20-alpine
 
-# Install PostgreSQL client tools and bash
-RUN apk add --no-cache postgresql-client bash
+# Install PostgreSQL client tools
+RUN apk add --no-cache postgresql-client netcat-openbsd
 
+# Set working directory
 WORKDIR /app
 
-# Copy only the necessary files for database initialization
-COPY package.json ./
+# Copy package files
+COPY package*.json ./
 COPY prisma ./prisma/
-COPY scripts ./scripts/
-COPY src ./src/
 COPY tsconfig.json ./
+COPY .npmrc ./
 
-# Install only the necessary dependencies with specific versions
-RUN npm install --no-cache \
-    @prisma/client@latest \
-    prisma@latest \
-    ts-node@latest \
-    typescript@latest \
-    rimraf@latest \
-    glob@latest \
-    csv-parse@latest
+# Install dependencies
+RUN npm install
+RUN npm install -g ts-node typescript @types/node
+
+# Copy source files
+COPY src ./src
+COPY scripts ./scripts
+COPY data ./data
 
 # Generate Prisma client
 RUN npx prisma generate
 
-# Make scripts executable
-RUN chmod +x scripts/init-db.sh
-
 # Set environment variables
 ENV NODE_ENV=production
 
-# The command will be specified in docker-compose 
+# Make scripts executable
+RUN chmod +x scripts/init-db.sh
+
+# Command to run the initialization script
+CMD ["sh", "scripts/init-db.sh"] 
