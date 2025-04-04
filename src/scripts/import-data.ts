@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Prisma } from '@prisma/client';
 import { parse } from 'csv-parse/sync';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -46,7 +46,7 @@ async function main() {
           continue;
         }
 
-        const bookData = {
+        const bookData: Prisma.BookCreateInput = {
           id: record.id,
           title: record.title,
           url: record.url,
