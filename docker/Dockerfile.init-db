@@ -1,0 +1,28 @@
+# Use Node.js 18.19 Alpine as base
+FROM node:18.19-alpine
+
+# Install PostgreSQL client tools
+RUN apk add --no-cache postgresql-client
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install only the necessary dependencies
+RUN npm install --no-cache @prisma/client prisma ts-node typescript
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN npx prisma generate
+
+# Make scripts executable
+RUN chmod +x scripts/init-db.sh
+
+# Set environment variables
+ENV NODE_ENV=production
+
+# The command will be specified in docker-compose 
