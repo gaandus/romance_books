@@ -9,8 +9,8 @@ interface BookRecord {
   id: string;
   title: string;
   url: string;
-  title_scraped: string;
-  author_scraped: string;
+  title_scraped: string | null;
+  author_scraped: string | null;
   series_name?: string | null;
   series_number?: string | null;
   rating?: string | null;
@@ -41,7 +41,7 @@ async function main() {
     for (const record of records) {
       try {
         // Ensure required fields are not null
-        if (!record.title || !record.url || !record.title_scraped || !record.author_scraped) {
+        if (!record.title || !record.url) {
           console.error(`Skipping record with missing required fields: ${record.title || 'unknown'}`);
           continue;
         }
@@ -51,8 +51,8 @@ async function main() {
             id: record.id,
             title: record.title,
             url: record.url,
-            titleScraped: record.title_scraped,
-            authorScraped: record.author_scraped,
+            titleScraped: record.title_scraped || record.title, // Fallback to title if null
+            authorScraped: record.author_scraped || 'Unknown Author', // Fallback to Unknown Author if null
             seriesName: record.series_name || null,
             seriesNumber: record.series_number ? parseInt(record.series_number) : null,
             rating: record.rating ? parseFloat(record.rating) : null,
