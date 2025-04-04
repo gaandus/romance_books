@@ -33,6 +33,8 @@ services:
         condition: service_healthy
     networks:
       - romance-network
+    profiles:
+      - init-db
 
   web:
     build:
@@ -47,8 +49,8 @@ services:
     env_file:
       - .env
     depends_on:
-      init-db:
-        condition: service_completed_successfully
+      db:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
