@@ -20,7 +20,8 @@ RUN npm install --no-cache \
     ts-node@latest \
     typescript@latest \
     rimraf@latest \
-    glob@latest
+    glob@latest \
+    csv-parse@latest
 
 # Generate Prisma client
 RUN npx prisma generate

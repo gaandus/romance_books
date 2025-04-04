@@ -11,18 +11,18 @@ interface BookRecord {
   url: string;
   title_scraped: string;
   author_scraped: string;
-  series_name?: string;
-  series_number?: string;
-  rating?: string;
-  num_ratings?: string;
-  pages?: string;
-  published_date?: string;
-  spice_level?: string;
-  summary?: string;
-  filters?: string;
-  tags?: string;
-  content_warnings?: string;
-  scraped_status?: string;
+  series_name?: string | null;
+  series_number?: string | null;
+  rating?: string | null;
+  num_ratings?: string | null;
+  pages?: string | null;
+  published_date?: string | null;
+  spice_level?: string | null;
+  summary?: string | null;
+  filters?: string | null;
+  tags?: string | null;
+  content_warnings?: string | null;
+  scraped_status?: string | null;
 }
 
 async function main() {
