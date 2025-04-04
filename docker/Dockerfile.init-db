@@ -6,15 +6,20 @@ RUN apk add --no-cache postgresql-client
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# Copy only the necessary files for database initialization
+COPY package.json ./
 COPY prisma ./prisma/
+COPY scripts ./scripts/
+COPY tsconfig.json ./
 
-# Install only the necessary dependencies
-RUN npm install --no-cache @prisma/client prisma ts-node typescript
-
-# Copy source code
-COPY . .
+# Install only the necessary dependencies with specific versions
+RUN npm install --no-cache \
+    @prisma/client@latest \
+    prisma@latest \
+    ts-node@latest \
+    typescript@latest \
+    rimraf@latest \
+    glob@latest
 
 # Generate Prisma client
 RUN npx prisma generate
