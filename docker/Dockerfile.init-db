@@ -15,6 +15,7 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 COPY tsconfig.json ./
+COPY tsconfig.scripts.json ./
 COPY .npmrc ./
 
 # Install dependencies
@@ -29,7 +30,8 @@ COPY data ./data
 
 # Generate Prisma client and compile TypeScript
 RUN npx prisma generate
-RUN npx tsc src/scripts/import-data.ts --esModuleInterop --outDir dist
+RUN mkdir -p dist/scripts
+RUN npx tsc --project tsconfig.scripts.json
 
 # Set environment variables
 ENV NODE_ENV=production
