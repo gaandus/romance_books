@@ -15,7 +15,8 @@ RUN npm install --no-cache \
     eslint@latest \
     @typescript-eslint/parser@latest \
     @typescript-eslint/eslint-plugin@latest \
-    lru-cache@latest
+    lru-cache@latest \
+    csstype@3.0.10
 
 # Install remaining dependencies
 RUN npm install --no-cache
