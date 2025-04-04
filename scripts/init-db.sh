@@ -15,7 +15,7 @@ npx prisma migrate deploy
 if [ -f "/app/data/scraped_books_details.csv" ]; then
   echo "Importing initial data..."
   cd /app
-  npx ts-node src/scripts/import-data.ts
+  npx ts-node --project tsconfig.json src/scripts/import-data.ts
 fi
 
 echo "Database initialization complete!" 
