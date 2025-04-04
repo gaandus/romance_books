@@ -1,41 +1,6 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:15-alpine
-    environment:
-      - POSTGRES_USER=romance
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
-      - POSTGRES_DB=romance
-    volumes:
-      - romance-db-data:/var/lib/postgresql/data
-    networks:
-      - romance-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U romance"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-  init-db:
-    build:
-      context: ..
-      dockerfile: docker/Dockerfile.init-db
-    command: sh -c "ls -la /app/scripts && cd /app && bash scripts/init-db.sh"
-    volumes:
-      - ../data:/app/data
-    environment:
-      - DATABASE_URL=postgresql://romance:${DB_PASSWORD}@db:5432/romance
-    env_file:
-      - .env
-    depends_on:
-      db:
-        condition: service_healthy
-    networks:
-      - romance-network
-    profiles:
-      - init-db
-
   web:
     build:
       context: ..
@@ -44,26 +9,58 @@ services:
       - "3003:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=postgresql://romance:${DB_PASSWORD}@db:5432/romance
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/romance_books
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-    env_file:
-      - .env
     depends_on:
       db:
         condition: service_healthy
-    restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    restart: unless-stopped
     networks:
-      - romance-network
+      - app-network
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=romance_books
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  init-db:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.init-db
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/romance_books
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      - init-db
+    networks:
+      - app-network
 
 networks:
-  romance-network:
+  app-network:
     driver: bridge
 
 volumes:
-  romance-db-data: 
+  postgres_data:
