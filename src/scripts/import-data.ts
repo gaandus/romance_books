@@ -40,6 +40,12 @@ async function main() {
 
     for (const record of records) {
       try {
+        // Ensure required fields are not null
+        if (!record.title || !record.url || !record.title_scraped || !record.author_scraped) {
+          console.error(`Skipping record with missing required fields: ${record.title || 'unknown'}`);
+          continue;
+        }
+
         await prisma.book.create({
           data: {
             id: record.id,
