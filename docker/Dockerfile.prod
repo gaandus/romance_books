@@ -24,7 +24,7 @@ RUN npm install --no-cache \
 RUN npm install --no-cache
 
 # Copy the rest of the application
-COPY ../ ./
+COPY . .
 
 # Create public directory if it doesn't exist
 RUN mkdir -p public
