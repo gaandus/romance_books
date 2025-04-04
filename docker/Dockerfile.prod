@@ -23,6 +23,9 @@ RUN npm install --no-cache
 # Copy source code
 COPY . .
 
+# Create public directory if it doesn't exist
+RUN mkdir -p public
+
 # Generate Prisma client
 RUN npx prisma generate
 
