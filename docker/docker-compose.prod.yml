@@ -3,7 +3,7 @@ version: '3.8'
 services:
   web:
     build:
-      context: ..
+      context: .
       dockerfile: docker/Dockerfile.prod
     ports:
       - "3003:3000"
@@ -46,7 +46,7 @@ services:
 
   init-db:
     build:
-      context: ..
+      context: .
       dockerfile: docker/Dockerfile.init-db
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/romance_books
