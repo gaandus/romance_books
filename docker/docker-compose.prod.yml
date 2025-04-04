@@ -20,8 +20,8 @@ services:
   init-db:
     build:
       context: ..
-      dockerfile: docker/Dockerfile.prod
-    command: sh -c "pwd && ls -la /app/scripts && echo 'Running init-db.sh...' && /bin/sh /app/scripts/init-db.sh"
+      dockerfile: docker/Dockerfile.init-db
+    command: sh -c "ls -la /app/scripts && /app/scripts/init-db.sh"
     volumes:
       - ../data:/app/data
     environment:
