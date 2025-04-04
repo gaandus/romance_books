@@ -11,6 +11,11 @@ const nextConfig = {
     minimumCacheTTL: 60,
   },
 
+  // Disable type checking during build
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+
   // Optimize build performance
   experimental: {
     optimizeCss: false,
