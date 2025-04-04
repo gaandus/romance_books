@@ -7,9 +7,8 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install dependencies with specific version of csstype
+# Install dependencies
 RUN npm install
-RUN npm install csstype@3.1.2
 
 # Copy source code
 COPY . .
@@ -19,10 +18,6 @@ RUN npx prisma generate
 
 # Make scripts executable
 RUN chmod +x scripts/init-db.sh
-
-# Clean npm cache and node_modules
-RUN npm cache clean --force
-RUN rm -rf node_modules/.cache
 
 # Build the application
 RUN npm run build
