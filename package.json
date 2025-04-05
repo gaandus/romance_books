@@ -41,6 +41,8 @@
     "typescript": "^5"
   },
   "resolutions": {
-    "csstype": "3.1.3"
+    "csstype": "3.1.3",
+    "tr46": "4.1.1",
+    "whatwg-url": "14.0.0"
   }
 }
