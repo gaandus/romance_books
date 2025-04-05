@@ -6,8 +6,6 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-const ASSISTANT_ID = 'asst_Cc2xcct3FDU54Oh7d0lTq9WG';
-
 // Validation schema for preferences
 const preferencesSchema = z.object({
     genres: z.array(z.string()).optional(),
@@ -18,7 +16,7 @@ const preferencesSchema = z.object({
     keywords: z.array(z.string()).optional(),
 });
 
-const ASSISTANT_CONTEXT = `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format.
+const SYSTEM_PROMPT = `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format.
 
 For content warnings, distinguish between warnings they want to include and warnings they want to exclude.
 
@@ -48,52 +46,27 @@ Response should be like this:
 
 export async function analyzeUserPreferences(message: string): Promise<UserPreferences> {
     try {
-        // Create a thread
-        const thread = await openai.beta.threads.create();
-        
-        // Add the user's message
-        await openai.beta.threads.messages.create(thread.id, {
-            role: "user",
-            content: message
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4-turbo-preview",
+            messages: [
+                { role: "system", content: SYSTEM_PROMPT },
+                { role: "user", content: message }
+            ],
+            response_format: { type: "json_object" }
         });
 
-        // Run the assistant
-        const run = await openai.beta.threads.runs.create(thread.id, {
-            assistant_id: ASSISTANT_ID
-        });
+        const response = completion.choices[0].message.content;
+        if (!response) return {};
 
-        // Wait for the run to complete
-        let runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
-        while (runStatus.status === 'in_progress' || runStatus.status === 'queued') {
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            runStatus = await openai.beta.threads.runs.retrieve(thread.id, run.id);
+        try {
+            const parsedData = JSON.parse(response);
+            const validatedData = preferencesSchema.parse(parsedData);
+            console.log('Validated preferences:', validatedData);
+            return validatedData;
+        } catch (error) {
+            console.error('Error parsing or validating response:', error);
+            return {};
         }
-
-        // Get the assistant's response
-        const messages = await openai.beta.threads.messages.list(thread.id);
-        const lastMessage = messages.data[0];
-        
-        // Clean up the thread
-        await openai.beta.threads.del(thread.id);
-
-        // Parse and validate the response
-        if (lastMessage.content[0].type === 'text') {
-            const text = lastMessage.content[0].text.value;
-            console.log('Raw LLM response:', text);
-            try {
-                const parsedData = JSON.parse(text);
-                const validatedData = preferencesSchema.parse(parsedData);
-                
-                console.log('Validated preferences:', validatedData);
-                return validatedData;
-            } catch (error) {
-                console.error('Error parsing or validating assistant response:', error);
-                // Return empty preferences instead of throwing
-                return {};
-            }
-        }
-
-        return {};
     } catch (error) {
         console.error('Error analyzing preferences:', error);
         return {};
