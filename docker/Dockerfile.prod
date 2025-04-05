@@ -5,11 +5,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package files
-COPY ../package*.json ./
-COPY ../.npmrc ./
+COPY package*.json ./
+COPY .npmrc ./
 
 # Copy prisma schema
-COPY ../prisma ./prisma/
+COPY prisma ./prisma/
 
 # Install dependencies
 RUN npm install --no-cache \
@@ -24,7 +24,7 @@ RUN npm install --no-cache \
 RUN npm install --no-cache openai@4.28.0
 
 # Copy the rest of the application
-COPY ../ .
+COPY . .
 
 # Create public directory if it doesn't exist
 RUN mkdir -p public
