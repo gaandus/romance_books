@@ -13,6 +13,11 @@ const nextConfig = {
   },
   eslint: {
     ignoreDuringBuilds: true,
+  },
+  webpack: (config) => {
+    // Disable CSS optimization during build
+    config.optimization.minimize = false;
+    return config;
   }
 };
 
