@@ -11,14 +11,22 @@ COPY .npmrc ./
 # Copy prisma schema
 COPY prisma ./prisma/
 
-# Install dependencies
+# Install dependencies with specific versions
 RUN npm install --no-cache \
+    && npm install --no-cache \
     rimraf@latest \
     glob@latest \
     eslint@latest \
     @typescript-eslint/parser@latest \
     @typescript-eslint/eslint-plugin@latest \
-    lru-cache@latest
+    lru-cache@latest \
+    postcss@8.4.35 \
+    autoprefixer@10.4.17 \
+    tailwindcss@3.3.0 \
+    tr46@4.1.1 \
+    whatwg-url@14.0.0 \
+    reusify@1.0.4 \
+    node-fetch@2.7.0
 
 # Install project dependencies
 RUN npm install --no-cache openai@4.28.0
@@ -62,6 +70,10 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/scripts ./scripts
 COPY --from=builder /app/data ./data
 COPY --from=builder /app/app ./app
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/postcss.config.js ./
+COPY --from=builder /app/tailwind.config.js ./
+COPY --from=builder /app/tsconfig.json ./
 
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
