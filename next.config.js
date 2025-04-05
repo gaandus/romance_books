@@ -37,7 +37,26 @@ const nextConfig = {
     // Handle JSON files
     config.module.rules.push({
       test: /\.json$/,
-      type: 'json',
+      type: 'javascript/auto',
+      resolve: {
+        fullySpecified: false
+      }
+    });
+
+    // Add transpilation for problematic modules
+    config.module.rules.push({
+      test: /\.js$/,
+      include: [
+        /node_modules\/autoprefixer/,
+        /node_modules\/tr46/,
+        /node_modules\/safe-regex-test/
+      ],
+      use: {
+        loader: 'babel-loader',
+        options: {
+          presets: ['@babel/preset-env']
+        }
+      }
     });
 
     // Optimize bundle size
@@ -74,6 +93,7 @@ const nextConfig = {
       '@/types': `${__dirname}/src/types`,
       '@/app/utils': `${__dirname}/src/app/utils`,
       'ts-interface-checker': require.resolve('ts-interface-checker'),
+      'safe-regex-test': require.resolve('safe-regex-test')
     };
 
     return config;
