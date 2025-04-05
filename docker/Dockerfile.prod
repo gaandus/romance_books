@@ -4,27 +4,25 @@ FROM node:20-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Install Yarn and jq
-RUN apk add --no-cache jq && \
-    npm install -g yarn
+# Install jq for JSON validation
+RUN apk add --no-cache jq
 
 # Copy package files first
 COPY package*.json ./
 COPY .npmrc ./
-COPY yarn.lock ./
 
 # Verify package files are copied correctly
 RUN echo "=== Verifying package files ===" && \
     echo "\nPackage.json content:" && \
     cat package.json && \
-    echo "\nYarn.lock exists:" && \
-    ls -la yarn.lock || echo "No yarn.lock found"
+    echo "\nPackage-lock.json exists:" && \
+    ls -la package-lock.json || echo "No package-lock.json found"
 
 # Copy prisma schema
 COPY prisma ./prisma/
 
-# Install dependencies using Yarn
-RUN yarn install --frozen-lockfile
+# Install dependencies
+RUN npm install --no-cache
 
 # Copy the rest of the application
 COPY . .
@@ -58,7 +56,7 @@ RUN rm -rf .next
 RUN rm -rf node_modules/.cache
 
 # Build the application
-RUN yarn build
+RUN npm run build
 
 # Runner stage
 FROM node:20-alpine AS runner
@@ -91,4 +89,4 @@ RUN chmod +x scripts/init-db.sh
 EXPOSE 3000
 
 # Start the application
-CMD ["yarn", "start"]
+CMD ["npm", "start"]
