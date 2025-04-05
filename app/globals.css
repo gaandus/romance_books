@@ -8,8 +8,6 @@
     --foreground: 280 20% 20%;
     --card: 0 0% 100%;
     --card-foreground: 280 20% 20%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 280 20% 20%;
     --primary: 330 80% 60%;
     --primary-foreground: 0 0% 100%;
     --secondary: 280 40% 96%;
@@ -71,60 +69,17 @@
     @apply shadow-md hover:shadow-lg;
   }
   
-  .btn-primary:hover {
-    background-color: hsl(var(--primary) / 0.9);
-  }
-  
   .btn-secondary {
     background-color: hsl(var(--secondary));
     color: hsl(var(--secondary-foreground));
     @apply shadow-md hover:shadow-lg;
   }
   
-  .btn-secondary:hover {
-    background-color: hsl(var(--secondary) / 0.9);
-  }
-  
-  .btn-destructive {
-    background-color: hsl(var(--destructive));
-    color: hsl(var(--destructive-foreground));
-    @apply shadow-md hover:shadow-lg;
-  }
-  
-  .btn-destructive:hover {
-    background-color: hsl(var(--destructive) / 0.9);
-  }
-  
-  .btn-outline {
-    border: 1px solid hsl(var(--input));
-    background-color: transparent;
-    @apply shadow-md hover:shadow-lg;
-  }
-  
-  .btn-outline:hover {
-    background-color: hsl(var(--accent));
-    color: hsl(var(--accent-foreground));
-  }
-  
-  .btn-ghost:hover {
-    background-color: hsl(var(--accent));
-    color: hsl(var(--accent-foreground));
-  }
-  
-  .btn-link {
-    color: hsl(var(--primary));
-    @apply underline-offset-4 hover:underline;
-  }
-  
   .card {
     background-color: hsl(var(--card));
     color: hsl(var(--card-foreground));
-    @apply rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-300 backdrop-blur-sm bg-opacity-90 border;
+    @apply rounded-lg shadow-lg p-6 hover:shadow-xl transition-all duration-300;
     border-color: hsl(var(--border));
-  }
-  
-  .card:hover {
-    border-color: hsl(var(--primary) / 0.5);
   }
 
   .spice-level {
