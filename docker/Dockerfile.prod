@@ -17,6 +17,9 @@ COPY prisma ./prisma/
 # Install dependencies in stages
 RUN npm install --no-cache
 
+# Remove problematic packages
+RUN rm -rf node_modules/reusify
+
 # Install specific versions of problematic dependencies
 RUN npm install --no-cache \
     postcss@8.4.35 \
@@ -72,11 +75,6 @@ RUN echo "Checking reusify package..." && \
 
 # Verify package.json files
 RUN find node_modules -name "package.json" -type f -exec sh -c 'cat {} | jq . > /dev/null 2>&1 || echo "Invalid JSON in {}"' \;
-
-# Try to fix reusify package if needed
-RUN if [ ! -f node_modules/reusify/package.json ]; then \
-    echo "{\"name\":\"reusify\",\"version\":\"1.0.4\",\"description\":\"Reuse V8\\'s code cache\",\"main\":\"index.js\",\"scripts\":{\"test\":\"node test/test.js\"},\"repository\":{\"type\":\"git\",\"url\":\"git+https://github.com/mcollina/reusify.git\"},\"keywords\":[],\"author\":{\"name\":\"Matteo Collina\",\"email\":\"hello@matteocollina.com\"},\"license\":\"MIT\",\"bugs\":{\"url\":\"https://github.com/mcollina/reusify/issues\"},\"homepage\":\"https://github.com/mcollina/reusify#readme\"}" > node_modules/reusify/package.json; \
-    fi
 
 # Build the application
 RUN npm run build
