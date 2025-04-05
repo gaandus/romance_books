@@ -66,7 +66,12 @@ RUN rm -rf node_modules/.cache
 # Debug reusify package
 RUN echo "Checking reusify package..." && \
     ls -la node_modules/reusify && \
-    cat node_modules/reusify/package.json || echo "reusify package.json not found"
+    echo "\nContents of reusify package.json:" && \
+    cat node_modules/reusify/package.json || echo "reusify package.json not found" && \
+    echo "\nChecking if reusify directory exists:" && \
+    ls -la node_modules/reusify/ && \
+    echo "\nChecking reusify package.json with jq:" && \
+    cat node_modules/reusify/package.json | jq . || echo "Failed to parse reusify package.json"
 
 # Verify package.json files
 RUN find node_modules -name "package.json" -type f -exec sh -c 'cat {} | jq . > /dev/null 2>&1 || echo "Invalid JSON in {}"' \;
