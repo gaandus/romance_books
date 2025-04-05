@@ -1,10 +1,5 @@
-import OpenAI from 'openai';
 import { UserPreferences } from '@/types/book';
 import { z } from 'zod';
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-});
 
 // Validation schema for preferences
 const preferencesSchema = z.object({
@@ -46,20 +41,32 @@ Response should be like this:
 
 export async function analyzeUserPreferences(message: string): Promise<UserPreferences> {
     try {
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4-turbo-preview",
-            messages: [
-                { role: "system", content: SYSTEM_PROMPT },
-                { role: "user", content: message }
-            ],
-            response_format: { type: "json_object" }
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({
+                model: "gpt-4-turbo-preview",
+                messages: [
+                    { role: "system", content: SYSTEM_PROMPT },
+                    { role: "user", content: message }
+                ],
+                response_format: { type: "json_object" }
+            })
         });
 
-        const response = completion.choices[0].message.content;
-        if (!response) return {};
+        if (!response.ok) {
+            throw new Error(`OpenAI API error: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+        if (!content) return {};
 
         try {
-            const parsedData = JSON.parse(response);
+            const parsedData = JSON.parse(content);
             const validatedData = preferencesSchema.parse(parsedData);
             console.log('Validated preferences:', validatedData);
             return validatedData;
