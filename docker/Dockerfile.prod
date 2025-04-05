@@ -11,15 +11,11 @@ COPY .npmrc ./
 # Copy prisma schema
 COPY prisma ./prisma/
 
-# Install dependencies with specific versions
+# Install dependencies in stages
+RUN npm install --no-cache
+
+# Install specific versions of problematic dependencies
 RUN npm install --no-cache \
-    && npm install --no-cache \
-    rimraf@latest \
-    glob@latest \
-    eslint@latest \
-    @typescript-eslint/parser@latest \
-    @typescript-eslint/eslint-plugin@latest \
-    lru-cache@latest \
     postcss@8.4.35 \
     autoprefixer@10.4.17 \
     tailwindcss@3.3.0 \
@@ -28,7 +24,16 @@ RUN npm install --no-cache \
     reusify@1.0.4 \
     node-fetch@2.7.0
 
-# Install project dependencies
+# Install development dependencies
+RUN npm install --no-cache \
+    rimraf@latest \
+    glob@latest \
+    eslint@latest \
+    @typescript-eslint/parser@latest \
+    @typescript-eslint/eslint-plugin@latest \
+    lru-cache@latest
+
+# Install OpenAI with specific version
 RUN npm install --no-cache openai@4.28.0
 
 # Copy the rest of the application
@@ -46,6 +51,9 @@ RUN chmod +x scripts/init-db.sh
 # Clean up
 RUN rm -rf .next
 RUN rm -rf node_modules/.cache
+
+# Verify package.json files
+RUN find node_modules -name "package.json" -type f -exec sh -c 'cat {} | jq . > /dev/null 2>&1 || echo "Invalid JSON in {}"' \;
 
 # Build the application
 RUN npm run build
