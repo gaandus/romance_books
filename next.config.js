@@ -43,21 +43,6 @@ const nextConfig = {
       }
     });
 
-    // Add transpilation for problematic modules
-    config.module.rules.push({
-      test: /\.js$/,
-      include: [
-        /node_modules\/autoprefixer/,
-        /node_modules\/tr46/
-      ],
-      use: {
-        loader: 'babel-loader',
-        options: {
-          presets: ['@babel/preset-env']
-        }
-      }
-    });
-
     // Optimize bundle size
     if (!dev && !isServer) {
       config.optimization = {
@@ -90,8 +75,7 @@ const nextConfig = {
       '@': `${__dirname}/src`,
       '@/lib': `${__dirname}/src/lib`,
       '@/types': `${__dirname}/src/types`,
-      '@/app/utils': `${__dirname}/src/app/utils`,
-      'ts-interface-checker': require.resolve('ts-interface-checker')
+      '@/app/utils': `${__dirname}/src/app/utils`
     };
 
     return config;
