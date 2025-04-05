@@ -4,44 +4,27 @@ FROM node:20-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Install jq for JSON validation
-RUN apk add --no-cache jq
+# Install Yarn and jq
+RUN apk add --no-cache jq && \
+    npm install -g yarn
 
 # Copy package files first
 COPY package*.json ./
 COPY .npmrc ./
+COPY yarn.lock ./
+
+# Verify package files are copied correctly
+RUN echo "=== Verifying package files ===" && \
+    echo "\nPackage.json content:" && \
+    cat package.json && \
+    echo "\nYarn.lock exists:" && \
+    ls -la yarn.lock || echo "No yarn.lock found"
 
 # Copy prisma schema
 COPY prisma ./prisma/
 
-# Install reusify first
-RUN npm install --no-cache --save-exact reusify@1.0.4 && \
-    echo "=== Verifying reusify installation ===" && \
-    ls -la node_modules/reusify && \
-    echo "\nReusify package.json content:" && \
-    cat node_modules/reusify/package.json
-
-# Install dependencies in stages
-RUN npm install --no-cache && \
-    npm install --no-cache --save-exact \
-    postcss@8.4.35 \
-    autoprefixer@10.4.17 \
-    tailwindcss@3.3.0 \
-    tr46@4.1.1 \
-    whatwg-url@14.0.0 \
-    node-fetch@2.7.0
-
-# Install development dependencies
-RUN npm install --no-cache --save-exact \
-    rimraf@latest \
-    glob@latest \
-    eslint@latest \
-    @typescript-eslint/parser@latest \
-    @typescript-eslint/eslint-plugin@latest \
-    lru-cache@latest
-
-# Install OpenAI with specific version
-RUN npm install --no-cache --save-exact openai@4.28.0
+# Install dependencies using Yarn
+RUN yarn install --frozen-lockfile
 
 # Copy the rest of the application
 COPY . .
@@ -74,12 +57,8 @@ RUN chmod +x scripts/init-db.sh
 RUN rm -rf .next
 RUN rm -rf node_modules/.cache
 
-# Verify reusify package.json one last time
-RUN echo "=== Final verification of reusify package.json ===" && \
-    cat node_modules/reusify/package.json
-
 # Build the application
-RUN npm run build
+RUN yarn build
 
 # Runner stage
 FROM node:20-alpine AS runner
@@ -112,4 +91,4 @@ RUN chmod +x scripts/init-db.sh
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
