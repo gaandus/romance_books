@@ -29,9 +29,18 @@ const nextConfig = {
   webpack: (config, { dev, isServer }) => {
     // Exclude unnecessary files
     config.module.rules.push({
-      test: /\.(csv|json|txt|md|py|ipynb|db|sqlite|sqlite3)$/,
+      test: /\.(csv|txt|md|py|ipynb|db|sqlite|sqlite3)$/,
       exclude: /node_modules/,
       use: 'null-loader',
+    });
+
+    // Handle JSON files
+    config.module.rules.push({
+      test: /\.json$/,
+      type: 'javascript/auto',
+      resolve: {
+        fullySpecified: false
+      }
     });
 
     // Optimize bundle size
@@ -68,12 +77,6 @@ const nextConfig = {
       '@/types': `${__dirname}/src/types`,
       '@/app/utils': `${__dirname}/src/app/utils`,
     };
-
-    // Add JSON loader configuration
-    config.module.rules.push({
-      test: /\.json$/,
-      type: 'json',
-    });
 
     return config;
   },
