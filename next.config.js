@@ -10,14 +10,6 @@ const nextConfig = {
   },
   typescript: {
     ignoreBuildErrors: true,
-  },
-  webpack: (config) => {
-    // Handle reusify package
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      'reusify': false
-    };
-    return config;
   }
 };
 
