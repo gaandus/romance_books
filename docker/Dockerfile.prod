@@ -14,14 +14,11 @@ COPY .npmrc ./
 # Copy prisma schema
 COPY prisma ./prisma/
 
-# Install dependencies in stages
-RUN npm install --no-cache
-
-# Remove problematic packages
-RUN rm -rf node_modules/reusify
+# Clean install dependencies
+RUN npm ci --no-cache
 
 # Install specific versions of problematic dependencies
-RUN npm install --no-cache \
+RUN npm install --no-cache --save-exact \
     postcss@8.4.35 \
     autoprefixer@10.4.17 \
     tailwindcss@3.3.0 \
@@ -31,7 +28,7 @@ RUN npm install --no-cache \
     node-fetch@2.7.0
 
 # Install development dependencies
-RUN npm install --no-cache \
+RUN npm install --no-cache --save-exact \
     rimraf@latest \
     glob@latest \
     eslint@latest \
@@ -40,7 +37,7 @@ RUN npm install --no-cache \
     lru-cache@latest
 
 # Install OpenAI with specific version
-RUN npm install --no-cache openai@4.28.0
+RUN npm install --no-cache --save-exact openai@4.28.0
 
 # Copy the rest of the application
 COPY . .
