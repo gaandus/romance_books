@@ -69,6 +69,12 @@ const nextConfig = {
       '@/app/utils': `${__dirname}/src/app/utils`,
     };
 
+    // Add JSON loader configuration
+    config.module.rules.push({
+      test: /\.json$/,
+      type: 'json',
+    });
+
     return config;
   },
 
