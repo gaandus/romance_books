@@ -37,10 +37,7 @@ const nextConfig = {
     // Handle JSON files
     config.module.rules.push({
       test: /\.json$/,
-      type: 'javascript/auto',
-      resolve: {
-        fullySpecified: false
-      }
+      type: 'json',
     });
 
     // Optimize bundle size
@@ -76,6 +73,7 @@ const nextConfig = {
       '@/lib': `${__dirname}/src/lib`,
       '@/types': `${__dirname}/src/types`,
       '@/app/utils': `${__dirname}/src/app/utils`,
+      'ts-interface-checker': require.resolve('ts-interface-checker'),
     };
 
     return config;
