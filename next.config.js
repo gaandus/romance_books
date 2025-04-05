@@ -38,6 +38,28 @@ const nextConfig = {
       resolve: {
         fullySpecified: false,
       },
+      use: [
+        {
+          loader: 'json-loader',
+          options: {
+            esModule: false,
+          },
+        },
+      ],
+    });
+
+    // Add specific rule for tr46 mappingTable.json
+    config.module.rules.push({
+      test: /tr46\/lib\/mappingTable\.json$/,
+      type: 'javascript/auto',
+      use: [
+        {
+          loader: 'json-loader',
+          options: {
+            esModule: false,
+          },
+        },
+      ],
     });
 
     // Add aliases for problematic packages
