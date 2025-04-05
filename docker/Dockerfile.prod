@@ -14,9 +14,12 @@ COPY .npmrc ./
 # Copy prisma schema
 COPY prisma ./prisma/
 
-# Create reusify package.json with correct content
-RUN mkdir -p node_modules/reusify && \
-    echo '{"name":"reusify","version":"1.0.4","description":"Reuse V8'\''s code cache","main":"index.js","scripts":{"test":"node test/test.js"},"repository":{"type":"git","url":"git+https://github.com/mcollina/reusify.git"},"keywords":[],"author":{"name":"Matteo Collina","email":"hello@matteocollina.com"},"license":"MIT","bugs":{"url":"https://github.com/mcollina/reusify/issues"},"homepage":"https://github.com/mcollina/reusify#readme"}' > node_modules/reusify/package.json
+# Install reusify first
+RUN npm install --no-cache --save-exact reusify@1.0.4 && \
+    echo "=== Verifying reusify installation ===" && \
+    ls -la node_modules/reusify && \
+    echo "\nReusify package.json content:" && \
+    cat node_modules/reusify/package.json
 
 # Install dependencies in stages
 RUN npm install --no-cache && \
@@ -26,8 +29,7 @@ RUN npm install --no-cache && \
     tailwindcss@3.3.0 \
     tr46@4.1.1 \
     whatwg-url@14.0.0 \
-    node-fetch@2.7.0 \
-    reusify@1.0.4
+    node-fetch@2.7.0
 
 # Install development dependencies
 RUN npm install --no-cache --save-exact \
