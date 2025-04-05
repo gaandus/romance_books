@@ -48,8 +48,7 @@ const nextConfig = {
       test: /\.js$/,
       include: [
         /node_modules\/autoprefixer/,
-        /node_modules\/tr46/,
-        /node_modules\/safe-regex-test/
+        /node_modules\/tr46/
       ],
       use: {
         loader: 'babel-loader',
@@ -92,8 +91,7 @@ const nextConfig = {
       '@/lib': `${__dirname}/src/lib`,
       '@/types': `${__dirname}/src/types`,
       '@/app/utils': `${__dirname}/src/app/utils`,
-      'ts-interface-checker': require.resolve('ts-interface-checker'),
-      'safe-regex-test': require.resolve('safe-regex-test')
+      'ts-interface-checker': require.resolve('ts-interface-checker')
     };
 
     return config;
