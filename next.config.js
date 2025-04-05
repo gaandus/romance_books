@@ -7,8 +7,6 @@ const nextConfig = {
   // Optimize images
   images: {
     domains: ['m.media-amazon.com'],
-    formats: ['image/avif', 'image/webp'],
-    minimumCacheTTL: 60,
   },
 
   // Disable type checking during build
@@ -26,57 +24,12 @@ const nextConfig = {
   assetPrefix: '',
 
   // Optimize bundle size
-  webpack: (config, { dev, isServer }) => {
-    // Exclude unnecessary files
-    config.module.rules.push({
-      test: /\.(csv|txt|md|py|ipynb|db|sqlite|sqlite3)$/,
-      exclude: /node_modules/,
-      use: 'null-loader',
-    });
-
+  webpack: (config) => {
     // Handle JSON files
     config.module.rules.push({
       test: /\.json$/,
       type: 'javascript/auto',
-      resolve: {
-        fullySpecified: false
-      }
     });
-
-    // Optimize bundle size
-    if (!dev && !isServer) {
-      config.optimization = {
-        ...config.optimization,
-        splitChunks: {
-          chunks: 'all',
-          minSize: 20000,
-          maxSize: 244000,
-          minChunks: 1,
-          maxAsyncRequests: 30,
-          maxInitialRequests: 30,
-          cacheGroups: {
-            defaultVendors: {
-              test: /[\\/]node_modules[\\/]/,
-              priority: -10,
-              reuseExistingChunk: true,
-            },
-            default: {
-              minChunks: 2,
-              priority: -20,
-              reuseExistingChunk: true,
-            },
-          },
-        },
-      };
-    }
-
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      '@': `${__dirname}/src`,
-      '@/lib': `${__dirname}/src/lib`,
-      '@/types': `${__dirname}/src/types`,
-      '@/app/utils': `${__dirname}/src/app/utils`
-    };
 
     return config;
   },
