@@ -1,16 +1,12 @@
+const symbols = require('./node_modules/postcss/lib/symbols');
+
 module.exports = {
   plugins: {
+    'tailwindcss': {},
+    'autoprefixer': {},
     'postcss-flexbugs-fixes': {},
     'postcss-preset-env': {
-      autoprefixer: {
-        flexbox: 'no-2009'
-      },
-      stage: 3,
-      features: {
-        'custom-properties': false
-      }
-    },
-    'tailwindcss': {},
-    'autoprefixer': {}
+      stage: 3
+    }
   }
 } 

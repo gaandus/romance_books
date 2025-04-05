@@ -87,4 +87,8 @@ Thumbs.db
 
 # data directory
 /data/scraped_books_details.csv
-/scraped_response/ 
+/scraped_response/
+
+# PostCSS exceptions
+!postcss.config.js
+!node_modules/postcss/lib/symbols.js 

@@ -24,6 +24,13 @@ COPY prisma ./prisma/
 # Install dependencies
 RUN npm install --no-cache
 
+# Create PostCSS config
+RUN echo 'module.exports = { plugins: { "tailwindcss": {}, "autoprefixer": {}, "postcss-flexbugs-fixes": {}, "postcss-preset-env": { stage: 3 } } }' > postcss.config.js
+
+# Create symbols.js for PostCSS
+RUN mkdir -p node_modules/postcss/lib && \
+    echo 'module.exports = { symbol: Symbol, symbolFor: Symbol.for, symbolKeyFor: Symbol.keyFor };' > node_modules/postcss/lib/symbols.js
+
 # Copy the rest of the application
 COPY . .
 
