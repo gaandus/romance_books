@@ -7,12 +7,14 @@ WORKDIR /app
 # Install jq for JSON validation
 RUN apk add --no-cache jq
 
-# First, copy only the files needed for npm install
+# Copy package files first
 COPY package*.json ./
 COPY .npmrc ./
+
+# Copy prisma schema
 COPY prisma ./prisma/
 
-# Install dependencies
+# Install dependencies in stages
 RUN npm install --no-cache && \
     npm install --no-cache --save-exact \
     postcss@8.4.35 \
@@ -20,8 +22,12 @@ RUN npm install --no-cache && \
     tailwindcss@3.3.0 \
     tr46@4.1.1 \
     whatwg-url@14.0.0 \
-    reusify@1.0.4 \
     node-fetch@2.7.0
+
+# Install reusify separately
+RUN npm install --no-cache --save-exact reusify@1.0.4 && \
+    echo "Verifying reusify package.json:" && \
+    cat node_modules/reusify/package.json
 
 # Install development dependencies
 RUN npm install --no-cache --save-exact \
@@ -35,7 +41,7 @@ RUN npm install --no-cache --save-exact \
 # Install OpenAI with specific version
 RUN npm install --no-cache --save-exact openai@4.28.0
 
-# Now copy the rest of the application
+# Copy the rest of the application
 COPY . .
 
 # Verify all files are copied correctly
@@ -65,6 +71,10 @@ RUN chmod +x scripts/init-db.sh
 # Clean up
 RUN rm -rf .next
 RUN rm -rf node_modules/.cache
+
+# Verify reusify package.json one last time
+RUN echo "=== Final verification of reusify package.json ===" && \
+    cat node_modules/reusify/package.json
 
 # Build the application
 RUN npm run build
