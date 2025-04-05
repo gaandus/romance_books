@@ -16,15 +16,19 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   webpack: (config) => {
-    // Disable PostCSS processing
-    config.module.rules.forEach(rule => {
+    // Disable PostCSS by removing the loader
+    config.module.rules = config.module.rules.map(rule => {
       if (rule.oneOf) {
-        rule.oneOf.forEach(oneOfRule => {
-          if (oneOfRule.use && oneOfRule.use.some(use => use.loader && use.loader.includes('postcss-loader'))) {
-            oneOfRule.use = oneOfRule.use.filter(use => !use.loader || !use.loader.includes('postcss-loader'));
+        rule.oneOf = rule.oneOf.map(oneOfRule => {
+          if (oneOfRule.use && Array.isArray(oneOfRule.use)) {
+            oneOfRule.use = oneOfRule.use.filter(loader => 
+              !loader.loader || !loader.loader.includes('postcss-loader')
+            );
           }
+          return oneOfRule;
         });
       }
+      return rule;
     });
     return config;
   }
