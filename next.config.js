@@ -43,6 +43,15 @@ const nextConfig = {
       }
     });
 
+    // Special handling for tr46 mappingTable.json
+    config.module.rules.push({
+      test: /tr46\/lib\/mappingTable\.json$/,
+      type: 'javascript/auto',
+      use: {
+        loader: 'json-loader'
+      }
+    });
+
     // Optimize bundle size
     if (!dev && !isServer) {
       config.optimization = {
