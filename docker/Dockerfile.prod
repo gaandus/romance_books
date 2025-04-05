@@ -4,7 +4,10 @@ FROM node:20-alpine AS builder
 # Set working directory
 WORKDIR /app
 
-# Copy package files
+# Install jq for JSON validation
+RUN apk add --no-cache jq
+
+# Copy package files first
 COPY package*.json ./
 COPY .npmrc ./
 
@@ -39,6 +42,16 @@ RUN npm install --no-cache openai@4.28.0
 # Copy the rest of the application
 COPY . .
 
+# Verify critical files are present
+RUN echo "Verifying critical files..." && \
+    ls -la && \
+    echo "\nChecking app directory:" && \
+    ls -la app && \
+    echo "\nChecking node_modules:" && \
+    ls -la node_modules && \
+    echo "\nChecking package.json:" && \
+    cat package.json
+
 # Create public directory if it doesn't exist
 RUN mkdir -p public
 
@@ -52,8 +65,18 @@ RUN chmod +x scripts/init-db.sh
 RUN rm -rf .next
 RUN rm -rf node_modules/.cache
 
+# Debug reusify package
+RUN echo "Checking reusify package..." && \
+    ls -la node_modules/reusify && \
+    cat node_modules/reusify/package.json || echo "reusify package.json not found"
+
 # Verify package.json files
 RUN find node_modules -name "package.json" -type f -exec sh -c 'cat {} | jq . > /dev/null 2>&1 || echo "Invalid JSON in {}"' \;
+
+# Try to fix reusify package if needed
+RUN if [ ! -f node_modules/reusify/package.json ]; then \
+    echo '{"name":"reusify","version":"1.0.4","description":"Reuse V8's code cache","main":"index.js","scripts":{"test":"node test/test.js"},"repository":{"type":"git","url":"git+https://github.com/mcollina/reusify.git"},"keywords":[],"author":{"name":"Matteo Collina","email":"hello@matteocollina.com"},"license":"MIT","bugs":{"url":"https://github.com/mcollina/reusify/issues"},"homepage":"https://github.com/mcollina/reusify#readme"}' > node_modules/reusify/package.json; \
+    fi
 
 # Build the application
 RUN npm run build
@@ -64,24 +87,18 @@ FROM node:20-alpine AS runner
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.npmrc ./
+# Copy everything from builder
+COPY --from=builder /app .
 
-# Copy prisma schema
-COPY --from=builder /app/prisma ./prisma
-
-# Copy built application
-COPY --from=builder /app/.next ./.next
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/data ./data
-COPY --from=builder /app/app ./app
-COPY --from=builder /app/next.config.js ./
-COPY --from=builder /app/postcss.config.js ./
-COPY --from=builder /app/tailwind.config.js ./
-COPY --from=builder /app/tsconfig.json ./
+# Verify files in runner stage
+RUN echo "Verifying files in runner stage..." && \
+    ls -la && \
+    echo "\nChecking app directory:" && \
+    ls -la app && \
+    echo "\nChecking node_modules:" && \
+    ls -la node_modules && \
+    echo "\nChecking package.json:" && \
+    cat package.json
 
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
