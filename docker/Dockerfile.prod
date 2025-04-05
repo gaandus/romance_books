@@ -7,14 +7,12 @@ WORKDIR /app
 # Install jq for JSON validation
 RUN apk add --no-cache jq
 
-# Copy package files first
+# First, copy only the files needed for npm install
 COPY package*.json ./
 COPY .npmrc ./
-
-# Copy prisma schema
 COPY prisma ./prisma/
 
-# Update package-lock.json and install dependencies
+# Install dependencies
 RUN npm install --no-cache && \
     npm install --no-cache --save-exact \
     postcss@8.4.35 \
@@ -37,18 +35,23 @@ RUN npm install --no-cache --save-exact \
 # Install OpenAI with specific version
 RUN npm install --no-cache --save-exact openai@4.28.0
 
-# Copy the rest of the application
+# Now copy the rest of the application
 COPY . .
 
-# Verify critical files are present
-RUN echo "Verifying critical files..." && \
+# Verify all files are copied correctly
+RUN echo "=== Verifying file structure ===" && \
+    echo "\nRoot directory:" && \
     ls -la && \
-    echo "\nChecking app directory:" && \
+    echo "\nApp directory:" && \
     ls -la app && \
-    echo "\nChecking node_modules:" && \
+    echo "\nNode modules:" && \
     ls -la node_modules && \
-    echo "\nChecking package.json:" && \
-    cat package.json
+    echo "\nPrisma directory:" && \
+    ls -la prisma && \
+    echo "\nScripts directory:" && \
+    ls -la scripts && \
+    echo "\nData directory:" && \
+    ls -la data
 
 # Create public directory if it doesn't exist
 RUN mkdir -p public
@@ -63,19 +66,6 @@ RUN chmod +x scripts/init-db.sh
 RUN rm -rf .next
 RUN rm -rf node_modules/.cache
 
-# Debug reusify package
-RUN echo "Checking reusify package..." && \
-    ls -la node_modules/reusify && \
-    echo "\nContents of reusify package.json:" && \
-    cat node_modules/reusify/package.json || echo "reusify package.json not found" && \
-    echo "\nChecking if reusify directory exists:" && \
-    ls -la node_modules/reusify/ && \
-    echo "\nChecking reusify package.json with jq:" && \
-    cat node_modules/reusify/package.json | jq . || echo "Failed to parse reusify package.json"
-
-# Verify package.json files
-RUN find node_modules -name "package.json" -type f -exec sh -c 'cat {} | jq . > /dev/null 2>&1 || echo "Invalid JSON in {}"' \;
-
 # Build the application
 RUN npm run build
 
@@ -89,14 +79,19 @@ WORKDIR /app
 COPY --from=builder /app .
 
 # Verify files in runner stage
-RUN echo "Verifying files in runner stage..." && \
+RUN echo "=== Verifying files in runner stage ===" && \
+    echo "\nRoot directory:" && \
     ls -la && \
-    echo "\nChecking app directory:" && \
+    echo "\nApp directory:" && \
     ls -la app && \
-    echo "\nChecking node_modules:" && \
+    echo "\nNode modules:" && \
     ls -la node_modules && \
-    echo "\nChecking package.json:" && \
-    cat package.json
+    echo "\nPrisma directory:" && \
+    ls -la prisma && \
+    echo "\nScripts directory:" && \
+    ls -la scripts && \
+    echo "\nData directory:" && \
+    ls -la data
 
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
