@@ -42,7 +42,6 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "eslint": "^8",
-    "json-loader": "^0.5.7",
     "postcss": "8.4.35",
     "prisma": "^5.10.0",
     "tailwindcss": "^3.3.0",
@@ -58,6 +57,7 @@
     "tr46": "5.0.0",
     "es-abstract": "1.22.3",
     "safe-regex-test": "1.0.0",
-    "pify": "4.0.1"
+    "pify": "4.0.1",
+    "autoprefixer": "10.4.18"
   }
 }
