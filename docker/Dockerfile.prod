@@ -27,9 +27,10 @@ RUN npm install --no-cache
 # Create PostCSS config
 RUN echo 'module.exports = { plugins: { "tailwindcss": {}, "autoprefixer": {}, "postcss-flexbugs-fixes": {}, "postcss-preset-env": { stage: 3 } } }' > postcss.config.js
 
-# Create symbols.js for Next.js's internal PostCSS
+# Create required PostCSS files for Next.js
 RUN mkdir -p node_modules/next/node_modules/postcss/lib && \
-    echo 'module.exports = { symbol: Symbol, symbolFor: Symbol.for, symbolKeyFor: Symbol.keyFor };' > node_modules/next/node_modules/postcss/lib/symbols.js
+    echo 'module.exports = { symbol: Symbol, symbolFor: Symbol.for, symbolKeyFor: Symbol.keyFor };' > node_modules/next/node_modules/postcss/lib/symbols.js && \
+    echo 'module.exports = function (str) { return str; };' > node_modules/next/node_modules/postcss/lib/terminal-highlight.js
 
 # Copy the rest of the application
 COPY . .
