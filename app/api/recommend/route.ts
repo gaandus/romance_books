@@ -34,14 +34,26 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         }
 
         // Analyze user preferences using OpenAI
-        const preferences = await analyzeUserPreferences(message);
-        console.log('Analyzed preferences:', preferences);
+        let preferences;
+        try {
+            preferences = await analyzeUserPreferences(message);
+            console.log('Analyzed preferences:', preferences);
+        } catch (error) {
+            console.error('Error analyzing preferences:', error);
+            // Fallback to default preferences if analysis fails
+            preferences = {
+                spiceLevel: 'Medium',
+                genres: [],
+                contentWarnings: [],
+                excludedWarnings: []
+            };
+        }
         
         // Build query conditions
         const conditions: any = {};
         
         // Add genre conditions
-        if (preferences.genres.length > 0) {
+        if (preferences?.genres?.length > 0) {
             conditions.tags = {
                 some: {
                     OR: preferences.genres.map(genre => ({
@@ -54,11 +66,13 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         }
 
         // Add spice level condition
-        const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as keyof typeof SPICE_LEVEL_MAP];
-        if (spiceLevels) {
-            conditions.spiceLevel = {
-                in: spiceLevels
-            };
+        if (preferences?.spiceLevel) {
+            const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as keyof typeof SPICE_LEVEL_MAP];
+            if (spiceLevels) {
+                conditions.spiceLevel = {
+                    in: spiceLevels
+                };
+            }
         }
 
         // Add rating condition
@@ -75,7 +89,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         }
 
         // Exclude books with content warnings the user wants to avoid
-        if (preferences.excludedWarnings.length > 0) {
+        if (preferences?.excludedWarnings?.length > 0) {
             conditions.NOT = {
                 contentWarnings: {
                     some: {
