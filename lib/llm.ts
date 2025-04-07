@@ -3,7 +3,12 @@ import { z } from 'zod';
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    maxRetries: 3,
+    timeout: 30000, // 30 seconds
 });
+
+// Log the API key length to verify it's loaded (without exposing the key)
+console.log('OpenAI API Key length:', process.env.OPENAI_API_KEY?.length);
 
 const preferenceSchema = z.object({
     spiceLevel: z.enum(['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching', 'Inferno']),
@@ -14,6 +19,13 @@ const preferenceSchema = z.object({
 
 export async function analyzeUserPreferences(message: string) {
     try {
+        console.log('Starting analyzeUserPreferences with message:', message);
+        console.log('OpenAI client configuration:', {
+            maxRetries: openai.maxRetries,
+            timeout: openai.timeout,
+            baseURL: openai.baseURL
+        });
+
         const completion = await openai.chat.completions.create({
             model: "gpt-4-turbo",
             messages: [
@@ -57,23 +69,43 @@ You must return your response as a JSON object with the following structure:
             max_tokens: 1000
         });
 
+        console.log('OpenAI API response status:', completion.choices?.[0]?.finish_reason);
+        console.log('OpenAI API response content:', completion.choices?.[0]?.message?.content);
+
         if (!completion.choices?.[0]?.message?.content) {
             throw new Error('No response from OpenAI');
         }
 
         const response = completion.choices[0].message.content;
-        console.log('OpenAI response:', response);
+        console.log('Raw OpenAI response:', response);
 
         try {
             const parsedResponse = JSON.parse(response);
+            console.log('Parsed response:', parsedResponse);
             const validatedResponse = preferenceSchema.parse(parsedResponse);
+            console.log('Validated response:', validatedResponse);
             return validatedResponse;
         } catch (parseError) {
             console.error('Error parsing OpenAI response:', parseError);
+            if (parseError instanceof Error) {
+                console.error('Parse error details:', {
+                    message: parseError.message,
+                    name: parseError.name,
+                    stack: parseError.stack
+                });
+            }
             throw new Error('Failed to parse OpenAI response');
         }
     } catch (error) {
         console.error('Error analyzing user preferences:', error);
+        if (error instanceof Error) {
+            console.error('Error details:', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack,
+                cause: error.cause
+            });
+        }
         // Return default preferences if there's an error
         return {
             spiceLevel: 'Medium',
