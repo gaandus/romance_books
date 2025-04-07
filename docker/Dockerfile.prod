@@ -10,8 +10,9 @@ RUN apk add --no-cache jq
 # Copy package files
 COPY package*.json ./
 
-# Clean npm cache and install dependencies
-RUN npm cache clean --force && \
+# Install dependencies with a clean slate
+RUN rm -rf node_modules && \
+    npm cache clean --force && \
     npm install --no-package-lock
 
 # Copy the rest of the application
@@ -25,6 +26,11 @@ RUN npx prisma generate
 
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
+
+# Ensure PostCSS module is properly installed
+RUN cd node_modules/next/node_modules/postcss && \
+    npm install --no-package-lock && \
+    cd ../../../..
 
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
@@ -44,10 +50,12 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
+COPY --from=builder /app/node_modules/next/node_modules/postcss ./node_modules/next/node_modules/postcss
 
-# Install production dependencies
+# Install production dependencies with a clean slate
 COPY package*.json ./
-RUN npm cache clean --force && \
+RUN rm -rf node_modules && \
+    npm cache clean --force && \
     npm install --production --no-package-lock
 
 # Generate Prisma client
