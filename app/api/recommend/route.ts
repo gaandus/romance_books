@@ -13,6 +13,7 @@ const SPICE_LEVEL_MAP = {
     'Inferno': ['Sweet', 'Mild', 'Medium', 'Hot', 'Inferno']
 } as const;
 
+type SpiceLevel = keyof typeof SPICE_LEVEL_MAP;
 type ScoredBook = {
     book: Book;
     score: number;
@@ -22,38 +23,74 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
     try {
         const body = await request.json();
         
-        // Validate request body
-        const preferences = UserPreferencesSchema.parse(body);
+        // Extract message and book lists from the request
+        const { message, readBooks = [], notInterestedBooks = [], previouslySeenBooks = [] } = body;
+        
+        if (!message) {
+            throw new ApiError('Message is required', 400, 'MISSING_MESSAGE');
+        }
+
+        // Extract genres from the message using simple keyword matching
+        const genreKeywords = [
+            'contemporary', 'historical', 'paranormal', 'fantasy', 'scifi', 'science fiction',
+            'romantic comedy', 'romcom', 'dystopian', 'post-apocalyptic', 'western', 'sports',
+            'billionaire', 'small town', 'small-town', 'college', 'academic', 'medical',
+            'military', 'suspense', 'thriller', 'mystery', 'cozy mystery', 'erotic', 'dark',
+            'reverse harem', 'why choose', 'menage', 'polyamorous', 'lgbtq', 'lgbt', 'lesbian',
+            'gay', 'mm', 'ff', 'mf', 'mmf', 'ffm', 'mmff', 'ffmm', 'mmfm', 'ffmf'
+        ];
+        
+        const extractedGenres = genreKeywords.filter(keyword => 
+            message.toLowerCase().includes(keyword.toLowerCase())
+        );
+        
+        // Default to some popular genres if none were extracted
+        const genres = extractedGenres.length > 0 ? extractedGenres : ['contemporary', 'romantic comedy'];
+        
+        // Extract spice level from the message
+        let spiceLevel: SpiceLevel = 'Medium'; // Default
+        if (message.toLowerCase().includes('sweet') || message.toLowerCase().includes('clean')) {
+            spiceLevel = 'Sweet';
+        } else if (message.toLowerCase().includes('mild')) {
+            spiceLevel = 'Mild';
+        } else if (message.toLowerCase().includes('hot') || message.toLowerCase().includes('spicy')) {
+            spiceLevel = 'Hot';
+        } else if (message.toLowerCase().includes('inferno') || message.toLowerCase().includes('explicit')) {
+            spiceLevel = 'Inferno';
+        }
         
         // Build query conditions
         const conditions: any = {};
         
-        // Add genre conditions if specified
-        if (preferences.genres && preferences.genres.length > 0) {
-            conditions.tags = {
-                some: {
-                    name: {
-                        in: preferences.genres.map(genre => genre.toLowerCase())
-                    }
+        // Add genre conditions
+        conditions.tags = {
+            some: {
+                name: {
+                    in: genres.map(genre => genre.toLowerCase())
                 }
-            };
-        }
-
-        // Add spice level condition if specified
-        if (preferences.spiceLevel) {
-            const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel];
-            if (spiceLevels) {
-                conditions.spiceLevel = {
-                    in: spiceLevels
-                };
             }
+        };
+
+        // Add spice level condition
+        const spiceLevels = SPICE_LEVEL_MAP[spiceLevel];
+        if (spiceLevels) {
+            conditions.spiceLevel = {
+                in: spiceLevels
+            };
         }
 
         // Add rating condition
         conditions.averageRating = {
-            gte: preferences.minRating,
-            lte: preferences.maxRating
+            gte: 3.5,
+            lte: 5.0
         };
+        
+        // Exclude previously seen books
+        if (previouslySeenBooks.length > 0) {
+            conditions.id = {
+                notIn: previouslySeenBooks
+            };
+        }
 
         // Execute the query with timeout
         const queryPromise = prisma.book.findMany({
@@ -83,12 +120,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 let score = 0;
                 
                 // Score based on matching genres
-                if (preferences.genres) {
-                    const matchingGenres = book.tags.filter((tag) => 
-                        preferences.genres.includes(tag.name.toLowerCase())
-                    ).length;
-                    score += (matchingGenres / preferences.genres.length) * 4;
-                }
+                const matchingGenres = book.tags.filter((tag) => 
+                    genres.includes(tag.name.toLowerCase())
+                ).length;
+                score += (matchingGenres / genres.length) * 4;
 
                 // Score based on rating
                 const ratingScore = 1 - Math.abs(book.averageRating - 4.0) / 1.5;
@@ -98,100 +133,45 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 const reviewScore = Math.min(book.ratingsCount / 1000, 1);
                 score += reviewScore;
 
-                // Add randomization factor
-                score += Math.random() * 0.5;
-
                 return { book, score };
             });
-
-            // Sort by score and take top books
-            books = scoredBooks
-                .sort((a: ScoredBook, b: ScoredBook) => b.score - a.score)
-                .map((item: ScoredBook) => item.book)
-                .slice(0, MAX_BOOKS_PER_PAGE);
-
-        } catch (error) {
-            // Try a simpler query as fallback
-            books = await prisma.book.findMany({
-                where: {
-                    averageRating: { 
-                        gte: preferences.minRating,
-                        lte: preferences.maxRating
-                    },
-                    tags: preferences.genres ? {
-                        some: {
-                            name: {
-                                in: preferences.genres.map(genre => genre.toLowerCase())
-                            }
-                        }
-                    } : undefined
-                },
-                include: {
-                    tags: true,
-                    contentWarnings: true
-                },
-                take: MAX_BOOKS_PER_PAGE * 3,
-                orderBy: [
-                    { ratingsCount: 'desc' },
-                    { averageRating: 'desc' }
-                ]
-            }) as Book[];
             
-            // Apply the same scoring system to fallback results
-            const scoredBooks: ScoredBook[] = books.map((book: Book) => {
-                let score = 0;
-                
-                if (preferences.genres) {
-                    const matchingGenres = book.tags.filter((tag) => 
-                        preferences.genres.includes(tag.name.toLowerCase())
-                    ).length;
-                    score += (matchingGenres / preferences.genres.length) * 4;
+            // Sort by score and take the top books
+            const topBooks = scoredBooks
+                .sort((a, b) => b.score - a.score)
+                .slice(0, MAX_BOOKS_PER_PAGE)
+                .map(item => item.book);
+            
+            // Get total count for pagination
+            const totalCount = await prisma.book.count({ where: conditions });
+            
+            return NextResponse.json({
+                data: {
+                    books: topBooks,
+                    total: totalCount,
+                    hasMore: totalCount > MAX_BOOKS_PER_PAGE
                 }
-
-                const ratingScore = 1 - Math.abs(book.averageRating - 4.0) / 1.5;
-                score += ratingScore;
-
-                const reviewScore = Math.min(book.ratingsCount / 1000, 1);
-                score += reviewScore;
-
-                score += Math.random() * 0.5;
-
-                return { book, score };
             });
-
-            books = scoredBooks
-                .sort((a: ScoredBook, b: ScoredBook) => b.score - a.score)
-                .map((item: ScoredBook) => item.book)
-                .slice(0, MAX_BOOKS_PER_PAGE);
+            
+        } catch (error) {
+            console.error('Database query error:', error);
+            throw new ApiError('Failed to fetch book recommendations', 500, 'DB_QUERY_ERROR');
         }
-
-        return NextResponse.json({
-            data: {
-                books,
-                total: books.length,
-                hasMore: false // TODO: Implement pagination
-            }
-        });
-
+        
     } catch (error) {
-        console.error('Error in recommend route:', error);
+        console.error('API error:', error);
         
         if (error instanceof ApiError) {
-            return NextResponse.json(
-                { 
-                    data: { books: [], total: 0, hasMore: false },
-                    error: error.message 
-                },
-                { status: error.statusCode }
-            );
-        }
-
-        return NextResponse.json(
-            { 
+            return NextResponse.json({
                 data: { books: [], total: 0, hasMore: false },
-                error: 'Internal server error' 
-            },
-            { status: 500 }
-        );
+                error: error.message,
+                code: error.code
+            }, { status: error.statusCode });
+        }
+        
+        return NextResponse.json({
+            data: { books: [], total: 0, hasMore: false },
+            error: 'Internal server error'
+        }, { status: 500 });
     }
 } 
