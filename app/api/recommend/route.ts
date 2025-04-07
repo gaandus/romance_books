@@ -80,7 +80,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         }
 
         // Add rating condition
-        conditions.averageRating = {
+        conditions.rating = {
             gte: 3.5,
             lte: 5.0
         };
@@ -101,8 +101,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             },
             take: MAX_BOOKS_PER_PAGE * 3,
             orderBy: [
-                { ratingsCount: 'desc' },
-                { averageRating: 'desc' }
+                {
+                    numRatings: 'desc'
+                },
+                {
+                    rating: 'desc'
+                }
             ]
         });
 
@@ -126,11 +130,11 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 score += (matchingGenres / genres.length) * 4;
 
                 // Score based on rating
-                const ratingScore = 1 - Math.abs(book.averageRating - 4.0) / 1.5;
+                const ratingScore = 1 - Math.abs(book.rating - 4.0) / 1.5;
                 score += ratingScore;
 
                 // Score based on number of ratings
-                const reviewScore = Math.min(book.ratingsCount / 1000, 1);
+                const reviewScore = Math.min(book.numRatings / 1000, 1);
                 score += reviewScore;
 
                 return { book, score };

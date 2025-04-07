@@ -1,21 +1,23 @@
 export interface Book {
   id: string;
   title: string;
-  author: string;
   url: string;
-  averageRating: number;
-  ratingsCount: number;
-  spiceLevel: string | null;
-  summary: string;
-  tags: string[];
-  contentWarnings: string[];
-  series: string | null;
+  titleScraped: string | null;
+  authorScraped: string | null;
+  seriesName: string | null;
   seriesNumber: number | null;
-  pageCount: number | null;
+  rating: number | null;
+  numRatings: number | null;
+  pages: number | null;
   publishedDate: Date | null;
+  spiceLevel: string | null;
+  summary: string | null;
   scrapedStatus: string | null;
   createdAt: Date;
   updatedAt: Date;
+  tags: { id: string; name: string; count: number; }[];
+  contentWarnings: { id: string; name: string; count: number; }[];
+  filters: { id: string; name: string; count: number; }[];
 }
 
 export interface Filters {
