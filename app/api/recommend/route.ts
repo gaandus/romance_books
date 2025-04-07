@@ -154,37 +154,50 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             throw new ApiError('No books found matching your criteria', 404, 'NO_BOOKS_FOUND');
         }
 
-        // Score and sort books
-        const scoredBooks: ScoredBook[] = books.map(book => {
+        // Score and filter books
+        const scoredBooks = books.map(book => {
             let score = 0;
+            
+            // Score based on tags
+            if (book.tags) {
+                book.tags.forEach(tag => {
+                    const tagName = (tag as any).name?.toLowerCase() || '';
+                    if (preferences?.genres?.some(genre => tagName.includes(genre.toLowerCase()))) {
+                        score += 1;
+                    }
+                });
+            }
+            
+            // Score based on spice level
+            if (book.spiceLevel && preferences?.spiceLevel) {
+                const bookSpiceLevels = SPICE_LEVEL_MAP[book.spiceLevel as keyof typeof SPICE_LEVEL_MAP] || [];
+                const preferredSpiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as keyof typeof SPICE_LEVEL_MAP] || [];
+                if (bookSpiceLevels.some(level => preferredSpiceLevels.includes(level as any))) {
+                    score += 2;
+                }
+            }
+            
+            // Penalize books with excluded content warnings
+            if (book.contentWarnings && preferences?.excludedWarnings) {
+                const hasExcludedWarning = book.contentWarnings.some(warning => 
+                    preferences.excludedWarnings.some(excluded => 
+                        warning.name.toLowerCase().includes(excluded.toLowerCase())
+                    )
+                );
+                if (hasExcludedWarning) {
+                    score -= 3;
+                }
+            }
+            
+            return { ...book, score };
+        }).filter(book => book.score > 0)
+          .sort((a, b) => b.score - a.score)
+          .slice(0, 10);
 
-            // Score based on rating
-            const ratingScore = 1 - Math.abs(book.rating - 4.0) / 1.5;
-            score += ratingScore;
-
-            // Score based on number of ratings
-            const reviewScore = Math.min(book.numRatings / 1000, 1);
-            score += reviewScore;
-
-            // Score based on tag matches
-            const tagMatches = book.tags.filter(tag => 
-                preferences.genres.some(genre => tag.name.toLowerCase().includes(genre.toLowerCase()))
-            ).length;
-            score += tagMatches * 0.5;
-
-            return { book, score };
-        });
-
-        // Sort by score and take top books
-        const topBooks = scoredBooks
-            .sort((a, b) => b.score - a.score)
-            .slice(0, MAX_BOOKS_PER_PAGE)
-            .map(sb => sb.book);
-
-        console.log('Selected top books:', topBooks.length);
+        console.log('Selected top books:', scoredBooks.length);
 
         // Transform books to match the expected format
-        const transformedBooks = topBooks.map(book => ({
+        const transformedBooks = scoredBooks.map(book => ({
             id: book.id,
             title: book.title,
             author: book.author,
