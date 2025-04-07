@@ -54,17 +54,24 @@ You must return your response as a JSON object with the following structure:
             ],
             response_format: { type: "json_object" },
             temperature: 0.7,
+            max_tokens: 1000
         });
 
-        const response = completion.choices[0].message.content;
-        if (!response) {
+        if (!completion.choices?.[0]?.message?.content) {
             throw new Error('No response from OpenAI');
         }
 
-        const parsedResponse = JSON.parse(response);
-        const validatedResponse = preferenceSchema.parse(parsedResponse);
+        const response = completion.choices[0].message.content;
+        console.log('OpenAI response:', response);
 
-        return validatedResponse;
+        try {
+            const parsedResponse = JSON.parse(response);
+            const validatedResponse = preferenceSchema.parse(parsedResponse);
+            return validatedResponse;
+        } catch (parseError) {
+            console.error('Error parsing OpenAI response:', parseError);
+            throw new Error('Failed to parse OpenAI response');
+        }
     } catch (error) {
         console.error('Error analyzing user preferences:', error);
         // Return default preferences if there's an error
