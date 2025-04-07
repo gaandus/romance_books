@@ -11,17 +11,13 @@ RUN apk add --no-cache jq
 COPY package*.json ./
 COPY .npmrc ./
 
-# Verify package files are copied correctly
-RUN echo "=== Verifying package files ===" && \
-    echo "\nPackage.json content:" && \
-    cat package.json && \
-    echo "\nPackage-lock.json exists:" && \
-    ls -la package-lock.json || echo "No package-lock.json found"
+# Copy node_modules to preserve Next.js internal files
+COPY node_modules ./node_modules
 
 # Copy prisma schema
 COPY prisma ./prisma/
 
-# Install dependencies
+# Install dependencies (this will preserve existing node_modules)
 RUN npm install --no-cache
 
 # Copy the rest of the application
@@ -35,6 +31,8 @@ RUN echo "=== Verifying file structure ===" && \
     ls -la app && \
     echo "\nNode modules:" && \
     ls -la node_modules && \
+    echo "\nNext.js PostCSS:" && \
+    ls -la node_modules/next/node_modules/postcss/lib && \
     echo "\nPrisma directory:" && \
     ls -la prisma && \
     echo "\nScripts directory:" && \
@@ -75,6 +73,8 @@ RUN echo "=== Verifying files in runner stage ===" && \
     ls -la app && \
     echo "\nNode modules:" && \
     ls -la node_modules && \
+    echo "\nNext.js PostCSS:" && \
+    ls -la node_modules/next/node_modules/postcss/lib && \
     echo "\nPrisma directory:" && \
     ls -la prisma && \
     echo "\nScripts directory:" && \
