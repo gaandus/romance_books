@@ -13,7 +13,7 @@ COPY package*.json ./
 # Install dependencies with a clean slate
 RUN rm -rf node_modules && \
     npm cache clean --force && \
-    npm install --no-package-lock
+    npm install --force --no-package-lock
 
 # Copy the rest of the application
 COPY . .
@@ -50,7 +50,7 @@ COPY --from=builder /app/scripts ./scripts
 COPY package*.json ./
 RUN rm -rf node_modules && \
     npm cache clean --force && \
-    npm install --production --no-package-lock
+    npm install --production --force --no-package-lock
 
 # Generate Prisma client
 RUN npx prisma generate
