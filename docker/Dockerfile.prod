@@ -10,10 +10,11 @@ RUN apk add --no-cache jq
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies with a clean slate
+# Install dependencies with a clean slate and fix corrupted packages
 RUN rm -rf node_modules && \
     npm cache clean --force && \
-    npm install --no-package-lock
+    npm install --no-package-lock && \
+    npm install safe-regex-test reusify --no-package-lock
 
 # Copy the rest of the application
 COPY . .
@@ -56,7 +57,8 @@ COPY --from=builder /app/node_modules/next/node_modules/postcss ./node_modules/n
 COPY package*.json ./
 RUN rm -rf node_modules && \
     npm cache clean --force && \
-    npm install --production --no-package-lock
+    npm install --production --no-package-lock && \
+    npm install safe-regex-test reusify --no-package-lock
 
 # Generate Prisma client
 RUN npx prisma generate
