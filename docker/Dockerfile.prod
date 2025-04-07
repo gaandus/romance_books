@@ -10,8 +10,9 @@ RUN apk add --no-cache jq
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm install
+# Clean npm cache and install dependencies
+RUN npm cache clean --force && \
+    npm install --no-package-lock
 
 # Copy the rest of the application
 COPY . .
@@ -46,7 +47,8 @@ COPY --from=builder /app/scripts ./scripts
 
 # Install production dependencies
 COPY package*.json ./
-RUN npm install --production
+RUN npm cache clean --force && \
+    npm install --production --no-package-lock
 
 # Generate Prisma client
 RUN npx prisma generate
