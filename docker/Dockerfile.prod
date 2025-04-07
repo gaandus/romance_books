@@ -27,18 +27,10 @@ RUN npx prisma generate
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
 
-# Fix corrupted packages in their correct locations
-RUN cd node_modules/es-abstract/node_modules/safe-regex-test && \
-    npm install --no-package-lock && \
-    cd ../../../.. && \
-    cd node_modules/fastq/node_modules/reusify && \
-    npm install --no-package-lock && \
-    cd ../../../..
-
-# Ensure PostCSS module is properly installed
-RUN cd node_modules/next/node_modules/postcss && \
-    npm install --no-package-lock && \
-    cd ../../../..
+# Copy modules from repo
+COPY node_modules/es-abstract/node_modules/safe-regex-test ./node_modules/es-abstract/node_modules/safe-regex-test
+COPY node_modules/fastq/node_modules/reusify ./node_modules/fastq/node_modules/reusify
+COPY node_modules/next/node_modules/postcss ./node_modules/next/node_modules/postcss
 
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
