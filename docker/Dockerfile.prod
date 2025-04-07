@@ -23,7 +23,7 @@ RUN mkdir -p public
 RUN npx prisma generate
 
 # Make init-db.sh executable
-RUN chmod +x docker/init-db.sh
+RUN chmod +x scripts/init-db.sh
 
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
@@ -42,6 +42,7 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/scripts ./scripts
 
 # Install production dependencies
 COPY package*.json ./
@@ -49,6 +50,9 @@ RUN npm install --production
 
 # Generate Prisma client
 RUN npx prisma generate
+
+# Make init-db.sh executable in the runner stage
+RUN chmod +x scripts/init-db.sh
 
 # Expose port
 EXPOSE 3000
