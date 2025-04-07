@@ -2,9 +2,7 @@ import OpenAI from 'openai';
 import { z } from 'zod';
 
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    maxRetries: 3,
-    timeout: 30000, // 30 seconds
+    apiKey: process.env.OPENAI_API_KEY
 });
 
 // Log the API key length to verify it's loaded (without exposing the key)
@@ -19,19 +17,7 @@ const preferenceSchema = z.object({
 
 export async function analyzeUserPreferences(message: string) {
     try {
-        console.log('Starting analyzeUserPreferences with message:', message);
-        console.log('OpenAI client configuration:', {
-            maxRetries: openai.maxRetries,
-            timeout: openai.timeout,
-            baseURL: openai.baseURL
-        });
-
-        const completion = await openai.chat.completions.create({
-            model: "gpt-4-turbo",
-            messages: [
-                {
-                    role: "system",
-                    content: `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format.
+        const prompt = `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format.
 
 For content warnings, distinguish between warnings they want to include and warnings they want to exclude.
 
@@ -51,61 +37,33 @@ Available content warnings in the database: (comma-separated):
 
 IMPORTANT: Only use tags and content warnings that exist in the database. If a user mentions something that doesn't exist in the database, try to match it to the closest available option.
 
-You must return your response as a JSON object with the following structure:
+User request: "${message}"
+
+Respond in JSON format:
 {
     "spiceLevel": "Sweet" | "Mild" | "Medium" | "Hot" | "Scorching" | "Inferno",
     "genres": ["tag1", "tag2", ...],
     "contentWarnings": ["warning1", "warning2", ...],
     "excludedWarnings": ["warning1", "warning2", ...]
-}`
-                },
-                {
-                    role: "user",
-                    content: message
-                }
-            ],
-            response_format: { type: "json_object" },
-            temperature: 0.7,
-            max_tokens: 1000
+}`;
+
+        const completion = await openai.chat.completions.create({
+            messages: [{ role: "user", content: prompt }],
+            model: "gpt-3.5-turbo",
+            response_format: { type: "json_object" }
         });
 
-        console.log('OpenAI API response status:', completion.choices?.[0]?.finish_reason);
-        console.log('OpenAI API response content:', completion.choices?.[0]?.message?.content);
-
-        if (!completion.choices?.[0]?.message?.content) {
-            throw new Error('No response from OpenAI');
-        }
-
-        const response = completion.choices[0].message.content;
-        console.log('Raw OpenAI response:', response);
-
-        try {
-            const parsedResponse = JSON.parse(response);
-            console.log('Parsed response:', parsedResponse);
-            const validatedResponse = preferenceSchema.parse(parsedResponse);
-            console.log('Validated response:', validatedResponse);
-            return validatedResponse;
-        } catch (parseError) {
-            console.error('Error parsing OpenAI response:', parseError);
-            if (parseError instanceof Error) {
-                console.error('Parse error details:', {
-                    message: parseError.message,
-                    name: parseError.name,
-                    stack: parseError.stack
-                });
-            }
-            throw new Error('Failed to parse OpenAI response');
-        }
+        const response = completion.choices[0].message.content || '{"spiceLevel":"Medium","genres":[],"contentWarnings":[],"excludedWarnings":[]}';
+        const parsedResponse = JSON.parse(response);
+        
+        return {
+            spiceLevel: parsedResponse.spiceLevel || 'Medium',
+            genres: parsedResponse.genres || [],
+            contentWarnings: parsedResponse.contentWarnings || [],
+            excludedWarnings: parsedResponse.excludedWarnings || []
+        };
     } catch (error) {
         console.error('Error analyzing user preferences:', error);
-        if (error instanceof Error) {
-            console.error('Error details:', {
-                message: error.message,
-                name: error.name,
-                stack: error.stack,
-                cause: error.cause
-            });
-        }
         // Return default preferences if there's an error
         return {
             spiceLevel: 'Medium',
