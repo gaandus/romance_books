@@ -27,12 +27,6 @@ RUN npx prisma generate
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
 
-# Create necessary directories and copy PostCSS files
-RUN mkdir -p node_modules/next/node_modules/postcss/lib && \
-    cp node_modules/next/node_modules/postcss/lib/symbols.js ./node_modules/next/node_modules/postcss/lib/ && \
-    cp node_modules/next/node_modules/postcss/lib/terminal-highlight.js ./node_modules/next/node_modules/postcss/lib/ && \
-    cp node_modules/next/node_modules/postcss/lib/stringifier.js ./node_modules/next/node_modules/postcss/lib/
-
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
 
