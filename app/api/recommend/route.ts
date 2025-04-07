@@ -22,6 +22,7 @@ type ScoredBook = {
 export async function POST(request: Request): Promise<NextResponse<ApiResponse<RecommendationResponse>>> {
     try {
         const body = await request.json();
+        console.log('Request body:', body);
         
         // Extract message and book lists from the request
         const { message, readBooks = [], notInterestedBooks = [], previouslySeenBooks = [] } = body;
@@ -46,6 +47,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         
         // Default to some popular genres if none were extracted
         const genres = extractedGenres.length > 0 ? extractedGenres : ['contemporary', 'romantic comedy'];
+        console.log('Extracted genres:', genres);
         
         // Extract spice level from the message
         let spiceLevel: SpiceLevel = 'Medium'; // Default
@@ -58,6 +60,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         } else if (message.toLowerCase().includes('inferno') || message.toLowerCase().includes('explicit')) {
             spiceLevel = 'Inferno';
         }
+        console.log('Spice level:', spiceLevel);
         
         // Build query conditions
         const conditions: any = {};
@@ -66,7 +69,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         conditions.tags = {
             some: {
                 name: {
-                    in: genres.map(genre => genre.toLowerCase())
+                    startsWith: genres.map(genre => genre.toLowerCase())
                 }
             }
         };
@@ -92,6 +95,8 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             };
         }
 
+        console.log('Query conditions:', JSON.stringify(conditions, null, 2));
+
         // Execute the query with timeout
         const queryPromise = prisma.book.findMany({
             where: conditions,
@@ -112,70 +117,109 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
         // Add timeout to the query
         const timeoutPromise = new Promise((_, reject) => {
-            setTimeout(() => reject(new Error('Query timeout')), 5000);
+            setTimeout(() => reject(new Error('Database query timeout')), 5000);
         });
 
-        let books: Book[];
-        try {
-            books = await Promise.race([queryPromise, timeoutPromise]) as Book[];
-            
-            // Score books based on how well they match criteria
-            const scoredBooks: ScoredBook[] = books.map((book: Book) => {
-                let score = 0;
-                
-                // Score based on matching genres
-                const matchingGenres = book.tags.filter((tag) => 
-                    genres.includes(tag.name.toLowerCase())
-                ).length;
-                score += (matchingGenres / genres.length) * 4;
+        // Race the query against the timeout
+        const books = await Promise.race([queryPromise, timeoutPromise]) as Book[];
+        console.log('Found books:', books.length);
 
-                // Score based on rating
-                const ratingScore = 1 - Math.abs(book.rating - 4.0) / 1.5;
-                score += ratingScore;
-
-                // Score based on number of ratings
-                const reviewScore = Math.min(book.numRatings / 1000, 1);
-                score += reviewScore;
-
-                return { book, score };
-            });
-            
-            // Sort by score and take the top books
-            const topBooks = scoredBooks
-                .sort((a, b) => b.score - a.score)
-                .slice(0, MAX_BOOKS_PER_PAGE)
-                .map(item => item.book);
-            
-            // Get total count for pagination
-            const totalCount = await prisma.book.count({ where: conditions });
-            
-            return NextResponse.json({
-                data: {
-                    books: topBooks,
-                    total: totalCount,
-                    hasMore: totalCount > MAX_BOOKS_PER_PAGE
-                }
-            });
-            
-        } catch (error) {
-            console.error('Database query error:', error);
-            throw new ApiError('Failed to fetch book recommendations', 500, 'DB_QUERY_ERROR');
+        if (!books || books.length === 0) {
+            throw new ApiError('No books found matching your criteria', 404, 'NO_BOOKS_FOUND');
         }
-        
+
+        // Score and sort books
+        const scoredBooks: ScoredBook[] = books.map(book => {
+            let score = 0;
+
+            // Score based on rating
+            const ratingScore = 1 - Math.abs(book.rating - 4.0) / 1.5;
+            score += ratingScore;
+
+            // Score based on number of ratings
+            const reviewScore = Math.min(book.numRatings / 1000, 1);
+            score += reviewScore;
+
+            // Score based on tag matches
+            const tagMatches = book.tags.filter(tag => 
+                genres.some(genre => tag.name.toLowerCase().startsWith(genre.toLowerCase()))
+            ).length;
+            score += tagMatches * 0.5;
+
+            return { book, score };
+        });
+
+        // Sort by score and take top books
+        const topBooks = scoredBooks
+            .sort((a, b) => b.score - a.score)
+            .slice(0, MAX_BOOKS_PER_PAGE)
+            .map(sb => sb.book);
+
+        console.log('Selected top books:', topBooks.length);
+
+        // Transform books to match the expected format
+        const transformedBooks = topBooks.map(book => ({
+            id: book.id,
+            title: book.title,
+            author: book.author,
+            url: book.url,
+            rating: book.rating,
+            numRatings: book.numRatings,
+            spiceLevel: book.spiceLevel,
+            summary: book.summary,
+            tags: book.tags.map(tag => ({
+                id: tag.id,
+                name: tag.name.split('(')[0].trim(),
+                count: parseInt(tag.name.match(/\((\d+)\)/)?.[1] || '0')
+            })),
+            contentWarnings: book.contentWarnings.map(cw => ({
+                id: cw.id,
+                name: cw.name.split('(')[0].trim(),
+                count: parseInt(cw.name.match(/\((\d+)\)/)?.[1] || '0')
+            })),
+            series: null,
+            seriesNumber: book.seriesNumber,
+            pageCount: null,
+            publishedDate: book.publishedDate,
+            scrapedStatus: book.scrapedStatus,
+            createdAt: book.createdAt,
+            updatedAt: book.updatedAt
+        }));
+
+        console.log('Transformed books:', transformedBooks.length);
+
+        return NextResponse.json({
+            status: 200,
+            message: 'Success',
+            data: {
+                books: transformedBooks,
+                total: transformedBooks.length,
+                hasMore: false
+            }
+        });
     } catch (error) {
         console.error('API error:', error);
-        
         if (error instanceof ApiError) {
             return NextResponse.json({
-                data: { books: [], total: 0, hasMore: false },
-                error: error.message,
-                code: error.code
+                status: error.statusCode,
+                message: error.message,
+                code: error.code,
+                data: {
+                    books: [],
+                    total: 0,
+                    hasMore: false
+                }
             }, { status: error.statusCode });
         }
-        
         return NextResponse.json({
-            data: { books: [], total: 0, hasMore: false },
-            error: 'Internal server error'
+            status: 500,
+            message: 'Failed to fetch book recommendations',
+            code: 'DB_QUERY_ERROR',
+            data: {
+                books: [],
+                total: 0,
+                hasMore: false
+            }
         }, { status: 500 });
     }
 } 
