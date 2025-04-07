@@ -71,7 +71,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         conditions.tags = {
             some: {
                 name: {
-                    startsWith: preferences.genres.map(genre => genre.toLowerCase())
+                    startsWith: preferences.genres[0].toLowerCase()
                 }
             }
         };
