@@ -1,11 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { UserPreferencesSchema, ApiError, ApiResponse, RecommendationResponse, Book } from '@/types';
-import OpenAI from 'openai';
-
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
-});
+import { analyzeUserPreferences } from '@/lib/llm';
 
 const MAX_BOOKS_PER_PAGE = 4;
 
@@ -15,7 +11,8 @@ const SPICE_LEVEL_MAP = {
     'Mild': ['Sweet', 'Mild'],
     'Medium': ['Sweet', 'Mild', 'Medium'],
     'Hot': ['Sweet', 'Mild', 'Medium', 'Hot'],
-    'Inferno': ['Sweet', 'Mild', 'Medium', 'Hot', 'Inferno']
+    'Scorching': ['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching'],
+    'Inferno': ['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching', 'Inferno']
 } as const;
 
 type SpiceLevel = keyof typeof SPICE_LEVEL_MAP;
@@ -23,30 +20,6 @@ type ScoredBook = {
     book: Book;
     score: number;
 };
-
-async function analyzeUserPreferences(message: string) {
-    const prompt = `Analyze the following user request for romance book recommendations and extract:
-1. Preferred genres (from: contemporary, historical, paranormal, fantasy, scifi, romantic comedy, dystopian, western, sports, billionaire, small town, college, medical, military, suspense, thriller, mystery, erotic, dark, reverse harem, why choose, menage, polyamorous, lgbtq)
-2. Preferred spice level (Sweet, Mild, Medium, Hot, Inferno)
-3. Any specific themes or tropes mentioned
-
-User request: "${message}"
-
-Respond in JSON format:
-{
-    "genres": ["genre1", "genre2"],
-    "spiceLevel": "level",
-    "themes": ["theme1", "theme2"]
-}`;
-
-    const completion = await openai.chat.completions.create({
-        messages: [{ role: "user", content: prompt }],
-        model: "gpt-3.5-turbo",
-        response_format: { type: "json_object" }
-    });
-
-    return JSON.parse(completion.choices[0].message.content || '{"genres":[],"spiceLevel":"Medium","themes":[]}');
-}
 
 export async function POST(request: Request): Promise<NextResponse<ApiResponse<RecommendationResponse>>> {
     try {
@@ -68,16 +41,20 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         const conditions: any = {};
         
         // Add genre conditions
-        conditions.tags = {
-            some: {
-                name: {
-                    startsWith: preferences.genres[0].toLowerCase()
+        if (preferences.genres.length > 0) {
+            conditions.tags = {
+                some: {
+                    OR: preferences.genres.map(genre => ({
+                        name: {
+                            contains: genre.toLowerCase()
+                        }
+                    }))
                 }
-            }
-        };
+            };
+        }
 
         // Add spice level condition
-        const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as SpiceLevel];
+        const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as keyof typeof SPICE_LEVEL_MAP];
         if (spiceLevels) {
             conditions.spiceLevel = {
                 in: spiceLevels
@@ -94,6 +71,19 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         if (previouslySeenBooks.length > 0) {
             conditions.id = {
                 notIn: previouslySeenBooks
+            };
+        }
+
+        // Exclude books with content warnings the user wants to avoid
+        if (preferences.excludedWarnings.length > 0) {
+            conditions.NOT = {
+                contentWarnings: {
+                    some: {
+                        name: {
+                            in: preferences.excludedWarnings
+                        }
+                    }
+                }
             };
         }
 
@@ -117,7 +107,13 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             ]
         }).then((books: Book[]) => {
             console.log('Raw books from database:', books.length);
-            console.log('Sample book:', books[0]);
+            if (books.length > 0) {
+                console.log('Sample book:', {
+                    id: books[0].id,
+                    title: books[0].title,
+                    tags: books[0].tags.map(t => t.name)
+                });
+            }
             return books;
         });
 
@@ -135,7 +131,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 title: books[0].title,
                 rating: books[0].rating,
                 numRatings: books[0].numRatings,
-                tags: books[0].tags
+                tags: books[0].tags.map(t => t.name)
             });
         }
 
@@ -158,7 +154,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
             // Score based on tag matches
             const tagMatches = book.tags.filter(tag => 
-                preferences.genres.some(genre => tag.name.toLowerCase().startsWith(genre.toLowerCase()))
+                preferences.genres.some(genre => tag.name.toLowerCase().includes(genre.toLowerCase()))
             ).length;
             score += tagMatches * 0.5;
 
