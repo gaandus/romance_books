@@ -5,7 +5,11 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install jq and openssl for JSON validation and Prisma
-RUN apk add --no-cache jq openssl1.1-compat-dev
+RUN apk add --no-cache jq openssl
+
+# Set OpenSSL version
+ENV OPENSSL_CONF=/etc/ssl/
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 # Copy package files
 COPY package*.json ./
@@ -41,7 +45,11 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Install openssl for Prisma
-RUN apk add --no-cache openssl1.1-compat-dev
+RUN apk add --no-cache openssl
+
+# Set OpenSSL version
+ENV OPENSSL_CONF=/etc/ssl/
+ENV NODE_OPTIONS=--openssl-legacy-provider
 
 # Copy necessary files from builder
 COPY --from=builder /app/next.config.js ./
