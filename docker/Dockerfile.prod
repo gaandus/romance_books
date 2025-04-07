@@ -7,41 +7,14 @@ WORKDIR /app
 # Install jq for JSON validation
 RUN apk add --no-cache jq
 
-# Copy package files first
+# Copy package files
 COPY package*.json ./
-COPY .npmrc ./
 
-# Copy node_modules to preserve Next.js internal files
-COPY node_modules ./node_modules
-
-# Copy prisma schema
-COPY prisma ./prisma/
-
-# Install dependencies (this will preserve existing node_modules)
-RUN npm install --no-cache
-
-# Ensure PostCSS module is properly installed
-RUN cd node_modules/next/node_modules/postcss && npm install --no-package-lock
+# Clean install dependencies
+RUN npm ci
 
 # Copy the rest of the application
 COPY . .
-
-# Verify all files are copied correctly
-RUN echo "=== Verifying file structure ===" && \
-    echo "\nRoot directory:" && \
-    ls -la && \
-    echo "\nApp directory:" && \
-    ls -la app && \
-    echo "\nNode modules:" && \
-    ls -la node_modules && \
-    echo "\nNext.js PostCSS:" && \
-    ls -la node_modules/next/node_modules/postcss && \
-    echo "\nPrisma directory:" && \
-    ls -la prisma && \
-    echo "\nScripts directory:" && \
-    ls -la scripts && \
-    echo "\nData directory:" && \
-    ls -la data
 
 # Create public directory if it doesn't exist
 RUN mkdir -p public
@@ -50,46 +23,35 @@ RUN mkdir -p public
 RUN npx prisma generate
 
 # Make init-db.sh executable
-RUN chmod +x scripts/init-db.sh
+RUN chmod +x docker/init-db.sh
 
-# Clean up
-RUN rm -rf .next
-RUN rm -rf node_modules/.cache
+# Clean up unnecessary files
+RUN rm -rf .next node_modules/.cache
 
 # Build the application
 RUN npm run build
 
-# Runner stage
+# Production stage
 FROM node:20-alpine AS runner
 
-# Set working directory
 WORKDIR /app
 
-# Copy everything from builder
-COPY --from=builder /app .
+# Copy necessary files from builder
+COPY --from=builder /app/next.config.js ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+COPY --from=builder /app/prisma ./prisma
 
-# Verify files in runner stage
-RUN echo "=== Verifying files in runner stage ===" && \
-    echo "\nRoot directory:" && \
-    ls -la && \
-    echo "\nApp directory:" && \
-    ls -la app && \
-    echo "\nNode modules:" && \
-    ls -la node_modules && \
-    echo "\nNext.js PostCSS:" && \
-    ls -la node_modules/next/node_modules/postcss && \
-    echo "\nPrisma directory:" && \
-    ls -la prisma && \
-    echo "\nScripts directory:" && \
-    ls -la scripts && \
-    echo "\nData directory:" && \
-    ls -la data
+# Install production dependencies
+COPY package*.json ./
+RUN npm ci --only=production
 
-# Make init-db.sh executable
-RUN chmod +x scripts/init-db.sh
+# Generate Prisma client
+RUN npx prisma generate
 
 # Expose port
 EXPOSE 3000
 
 # Start the application
-CMD ["npm", "start"]
+CMD ["node", "server.js"]
