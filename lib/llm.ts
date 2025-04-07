@@ -4,12 +4,15 @@ import OpenAI from 'openai';
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
     maxRetries: 3,
-    timeout: 30000,
-    defaultQuery: { 'api-version': '2024-02-15-preview' }
+    timeout: 30000
 });
 
-// Log the API key length to verify it's loaded (without exposing the key)
-console.log('OpenAI API Key length:', process.env.OPENAI_API_KEY?.length);
+// Log environment details for debugging
+console.log('Environment variables:', {
+    hasApiKey: !!process.env.OPENAI_API_KEY,
+    apiKeyLength: process.env.OPENAI_API_KEY?.length,
+    nodeEnv: process.env.NODE_ENV
+});
 
 // Default preferences to return in case of errors
 const DEFAULT_PREFERENCES = {
@@ -22,9 +25,15 @@ const DEFAULT_PREFERENCES = {
 export async function analyzeUserPreferences(message: string) {
     console.log('Starting analyzeUserPreferences with message:', message);
     
+    if (!process.env.OPENAI_API_KEY) {
+        console.error('OpenAI API key is not configured');
+        return DEFAULT_PREFERENCES;
+    }
+    
     try {
+        console.log('Making OpenAI API request...');
         const completion = await openai.chat.completions.create({
-            model: "gpt-4-turbo",
+            model: "gpt-4-turbo-preview",
             messages: [
                 {
                     role: "system",

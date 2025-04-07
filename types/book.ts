@@ -3,8 +3,8 @@ export interface Book {
     title: string;
     author: string;
     url: string;
-    averageRating: number;
-    ratingsCount: number;
+    rating: number;
+    numRatings: number;
     spiceLevel: string | null;
     summary: string;
     tags: string[];

@@ -105,8 +105,8 @@ export default function ChatMessage({
                                     )}
 
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium">⭐ {book.averageRating.toFixed(1)}</span>
-                                        <span className="text-sm text-muted-foreground">({book.ratingsCount} ratings)</span>
+                                        <span className="text-sm font-medium">⭐ {book.rating.toFixed(1)}</span>
+                                        <span className="text-sm text-muted-foreground">({book.numRatings} ratings)</span>
                                     </div>
 
                                     <div className="spice-level text-sm" data-level={book.spiceLevel}>
