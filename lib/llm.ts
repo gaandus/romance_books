@@ -17,7 +17,12 @@ const preferenceSchema = z.object({
 
 export async function analyzeUserPreferences(message: string) {
     try {
-        const prompt = `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format.
+        const completion = await openai.chat.completions.create({
+            model: "gpt-4-turbo",
+            messages: [
+                {
+                    role: "system",
+                    content: `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format.
 
 For content warnings, distinguish between warnings they want to include and warnings they want to exclude.
 
@@ -37,19 +42,19 @@ Available content warnings in the database: (comma-separated):
 
 IMPORTANT: Only use tags and content warnings that exist in the database. If a user mentions something that doesn't exist in the database, try to match it to the closest available option.
 
-User request: "${message}"
-
-Respond in JSON format:
+You must return your response as a JSON object with the following structure:
 {
     "spiceLevel": "Sweet" | "Mild" | "Medium" | "Hot" | "Scorching" | "Inferno",
     "genres": ["tag1", "tag2", ...],
     "contentWarnings": ["warning1", "warning2", ...],
     "excludedWarnings": ["warning1", "warning2", ...]
-}`;
-
-        const completion = await openai.chat.completions.create({
-            messages: [{ role: "user", content: prompt }],
-            model: "gpt-3.5-turbo",
+}`
+                },
+                {
+                    role: "user",
+                    content: message
+                }
+            ],
             response_format: { type: "json_object" }
         });
 
