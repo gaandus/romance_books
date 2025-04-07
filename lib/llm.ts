@@ -1,19 +1,15 @@
 import OpenAI from 'openai';
-import { z } from 'zod';
 
+// Initialize OpenAI client with configuration
 const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY
+    apiKey: process.env.OPENAI_API_KEY,
+    maxRetries: 3,
+    timeout: 30000,
+    defaultQuery: { 'api-version': '2024-02-15-preview' }
 });
 
 // Log the API key length to verify it's loaded (without exposing the key)
 console.log('OpenAI API Key length:', process.env.OPENAI_API_KEY?.length);
-
-const preferenceSchema = z.object({
-    spiceLevel: z.enum(['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching', 'Inferno']),
-    genres: z.array(z.string()),
-    contentWarnings: z.array(z.string()),
-    excludedWarnings: z.array(z.string())
-});
 
 // Default preferences to return in case of errors
 const DEFAULT_PREFERENCES = {
@@ -24,9 +20,9 @@ const DEFAULT_PREFERENCES = {
 };
 
 export async function analyzeUserPreferences(message: string) {
+    console.log('Starting analyzeUserPreferences with message:', message);
+    
     try {
-        console.log('Starting analyzeUserPreferences with message:', message);
-        
         const completion = await openai.chat.completions.create({
             model: "gpt-4-turbo",
             messages: [
@@ -69,7 +65,7 @@ You must return your response as a JSON object with the following structure:
         });
 
         console.log('OpenAI API response received');
-        
+
         if (!completion.choices?.[0]?.message?.content) {
             console.error('No content in OpenAI response');
             return DEFAULT_PREFERENCES;
@@ -81,28 +77,10 @@ You must return your response as a JSON object with the following structure:
         try {
             const parsedResponse = JSON.parse(response);
             console.log('Parsed response:', parsedResponse);
-            
-            // Validate the response against our schema
-            const validatedResponse = preferenceSchema.parse(parsedResponse);
-            console.log('Validated response:', validatedResponse);
-            
-            return validatedResponse;
+            return parsedResponse;
         } catch (parseError) {
             console.error('Error parsing OpenAI response:', parseError);
-            
-            // Try to extract any useful information from the response
-            try {
-                const parsedResponse = JSON.parse(response);
-                return {
-                    spiceLevel: parsedResponse.spiceLevel || DEFAULT_PREFERENCES.spiceLevel,
-                    genres: Array.isArray(parsedResponse.genres) ? parsedResponse.genres : DEFAULT_PREFERENCES.genres,
-                    contentWarnings: Array.isArray(parsedResponse.contentWarnings) ? parsedResponse.contentWarnings : DEFAULT_PREFERENCES.contentWarnings,
-                    excludedWarnings: Array.isArray(parsedResponse.excludedWarnings) ? parsedResponse.excludedWarnings : DEFAULT_PREFERENCES.excludedWarnings
-                };
-            } catch (e) {
-                console.error('Failed to extract any useful information from response');
-                return DEFAULT_PREFERENCES;
-            }
+            return DEFAULT_PREFERENCES;
         }
     } catch (error) {
         console.error('Error analyzing user preferences:', error);
@@ -113,8 +91,6 @@ You must return your response as a JSON object with the following structure:
                 stack: error.stack
             });
         }
-        
-        // Return default preferences if there's an error
         return DEFAULT_PREFERENCES;
     }
 } 
