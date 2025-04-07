@@ -20,6 +20,9 @@ COPY prisma ./prisma/
 # Install dependencies (this will preserve existing node_modules)
 RUN npm install --no-cache
 
+# Ensure PostCSS module is properly installed
+RUN cd node_modules/next/node_modules/postcss && npm install --no-package-lock
+
 # Copy the rest of the application
 COPY . .
 
@@ -32,7 +35,7 @@ RUN echo "=== Verifying file structure ===" && \
     echo "\nNode modules:" && \
     ls -la node_modules && \
     echo "\nNext.js PostCSS:" && \
-    ls -la node_modules/next/node_modules/postcss/lib && \
+    ls -la node_modules/next/node_modules/postcss && \
     echo "\nPrisma directory:" && \
     ls -la prisma && \
     echo "\nScripts directory:" && \
@@ -74,7 +77,7 @@ RUN echo "=== Verifying files in runner stage ===" && \
     echo "\nNode modules:" && \
     ls -la node_modules && \
     echo "\nNext.js PostCSS:" && \
-    ls -la node_modules/next/node_modules/postcss/lib && \
+    ls -la node_modules/next/node_modules/postcss && \
     echo "\nPrisma directory:" && \
     ls -la prisma && \
     echo "\nScripts directory:" && \

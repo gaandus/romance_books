@@ -1,8 +1,6 @@
 # dependencies
 /node_modules
-!/node_modules/next/node_modules/postcss/lib/symbols.js
-!/node_modules/next/node_modules/postcss/lib/terminal-highlight.js
-!/node_modules/next/node_modules/postcss/lib/stringifier.js
+!/node_modules/next/node_modules/postcss
 /.pnp
 .pnp.js
 
