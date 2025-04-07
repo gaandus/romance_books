@@ -40,10 +40,18 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             console.log('Analyzed preferences:', preferences);
         } catch (error) {
             console.error('Error analyzing preferences:', error);
+            if (error instanceof Error) {
+                console.error('Error details:', {
+                    message: error.message,
+                    name: error.name,
+                    stack: error.stack,
+                    cause: error.cause
+                });
+            }
             // Fallback to default preferences if analysis fails
             preferences = {
                 spiceLevel: 'Medium',
-                genres: [],
+                genres: ['contemporary', 'romantic comedy'],
                 contentWarnings: [],
                 excludedWarnings: []
             };
@@ -56,7 +64,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         if (preferences?.genres?.length > 0) {
             conditions.tags = {
                 some: {
-                    OR: preferences.genres.map(genre => ({
+                    OR: preferences.genres.map((genre: string) => ({
                         name: {
                             contains: genre.toLowerCase()
                         }
@@ -158,12 +166,25 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         const scoredBooks = books.map(book => {
             let score = 0;
             
+            // Base score for all books
+            score += 1;
+            
+            // Score based on rating
+            if (book.rating) {
+                score += (book.rating - 3.5) * 2; // Higher ratings get more points
+            }
+            
+            // Score based on number of ratings
+            if (book.numRatings) {
+                score += Math.min(book.numRatings / 1000, 1); // More ratings = more points
+            }
+            
             // Score based on tags
             if (book.tags) {
                 book.tags.forEach(tag => {
                     const tagName = (tag as any).name?.toLowerCase() || '';
-                    if (preferences?.genres?.some(genre => tagName.includes(genre.toLowerCase()))) {
-                        score += 1;
+                    if (preferences?.genres?.some((genre: string) => tagName.includes(genre.toLowerCase()))) {
+                        score += 2; // Matching genre tags get more points
                     }
                 });
             }
@@ -173,28 +194,30 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 const bookSpiceLevels = SPICE_LEVEL_MAP[book.spiceLevel as keyof typeof SPICE_LEVEL_MAP] || [];
                 const preferredSpiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as keyof typeof SPICE_LEVEL_MAP] || [];
                 if (bookSpiceLevels.some(level => preferredSpiceLevels.includes(level as any))) {
-                    score += 2;
+                    score += 3; // Matching spice level gets more points
                 }
             }
             
             // Penalize books with excluded content warnings
             if (book.contentWarnings && preferences?.excludedWarnings) {
                 const hasExcludedWarning = book.contentWarnings.some(warning => 
-                    preferences.excludedWarnings.some(excluded => 
+                    preferences.excludedWarnings.some((excluded: string) => 
                         warning.name.toLowerCase().includes(excluded.toLowerCase())
                     )
                 );
                 if (hasExcludedWarning) {
-                    score -= 3;
+                    score -= 5; // Bigger penalty for excluded warnings
                 }
             }
             
             return { ...book, score };
-        }).filter(book => book.score > 0)
-          .sort((a, b) => b.score - a.score)
+        }).sort((a, b) => b.score - a.score)
           .slice(0, 10);
 
         console.log('Selected top books:', scoredBooks.length);
+        if (scoredBooks.length > 0) {
+            console.log('Top book score:', scoredBooks[0].score);
+        }
 
         // Transform books to match the expected format
         const transformedBooks = scoredBooks.map(book => ({
@@ -233,11 +256,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             data: {
                 books: transformedBooks,
                 total: transformedBooks.length,
+                page: 1,
                 hasMore: false
             }
         });
     } catch (error) {
-        console.error('API error:', error);
+        console.error('Error in recommendation route:', error);
         if (error instanceof ApiError) {
             return NextResponse.json({
                 status: error.statusCode,
@@ -252,8 +276,8 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         }
         return NextResponse.json({
             status: 500,
-            message: 'Failed to fetch book recommendations',
-            code: 'DB_QUERY_ERROR',
+            message: 'Internal server error',
+            code: 'INTERNAL_ERROR',
             data: {
                 books: [],
                 total: 0,
