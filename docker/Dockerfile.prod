@@ -28,11 +28,14 @@ RUN npx prisma generate
 RUN chmod +x scripts/init-db.sh
 
 # Fix corrupted packages
-RUN cd node_modules/es-abstract/node_modules && \
+RUN mkdir -p node_modules/es-abstract/node_modules && \
+    cd node_modules/es-abstract/node_modules && \
     npm install safe-regex-test --no-package-lock && \
-    cd ../../../fastq/node_modules && \
+    cd ../../../.. && \
+    mkdir -p node_modules/fastq/node_modules && \
+    cd node_modules/fastq/node_modules && \
     npm install reusify --no-package-lock && \
-    cd ../../..
+    cd ../../../..
 
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
@@ -60,11 +63,14 @@ RUN rm -rf node_modules && \
     npm install --production --no-package-lock
 
 # Fix corrupted packages in production
-RUN cd node_modules/es-abstract/node_modules && \
+RUN mkdir -p node_modules/es-abstract/node_modules && \
+    cd node_modules/es-abstract/node_modules && \
     npm install safe-regex-test --no-package-lock && \
-    cd ../../../fastq/node_modules && \
+    cd ../../../.. && \
+    mkdir -p node_modules/fastq/node_modules && \
+    cd node_modules/fastq/node_modules && \
     npm install reusify --no-package-lock && \
-    cd ../../..
+    cd ../../../..
 
 # Generate Prisma client
 RUN npx prisma generate
