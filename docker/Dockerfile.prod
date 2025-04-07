@@ -27,10 +27,11 @@ RUN npx prisma generate
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
 
-# Copy PostCSS files from repo
-COPY node_modules/next/node_modules/postcss/lib/symbols.js ./node_modules/next/node_modules/postcss/lib/symbols.js
-COPY node_modules/next/node_modules/postcss/lib/terminal-highlight.js ./node_modules/next/node_modules/postcss/lib/terminal-highlight.js
-COPY node_modules/next/node_modules/postcss/lib/stringifier.js ./node_modules/next/node_modules/postcss/lib/stringifier.js
+# Create necessary directories and copy PostCSS files
+RUN mkdir -p node_modules/next/node_modules/postcss/lib && \
+    cp node_modules/next/node_modules/postcss/lib/symbols.js ./node_modules/next/node_modules/postcss/lib/ && \
+    cp node_modules/next/node_modules/postcss/lib/terminal-highlight.js ./node_modules/next/node_modules/postcss/lib/ && \
+    cp node_modules/next/node_modules/postcss/lib/stringifier.js ./node_modules/next/node_modules/postcss/lib/
 
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
@@ -50,9 +51,12 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/symbols.js ./node_modules/next/node_modules/postcss/lib/symbols.js
-COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/terminal-highlight.js ./node_modules/next/node_modules/postcss/lib/terminal-highlight.js
-COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/stringifier.js ./node_modules/next/node_modules/postcss/lib/stringifier.js
+
+# Create necessary directories and copy PostCSS files
+RUN mkdir -p node_modules/next/node_modules/postcss/lib
+COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/symbols.js ./node_modules/next/node_modules/postcss/lib/
+COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/terminal-highlight.js ./node_modules/next/node_modules/postcss/lib/
+COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/stringifier.js ./node_modules/next/node_modules/postcss/lib/
 
 # Install production dependencies with a clean slate
 COPY package*.json ./
