@@ -27,11 +27,6 @@ RUN npx prisma generate
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
 
-# Fix corrupted packages
-RUN mkdir -p node_modules/reusify && \
-    echo '{"name":"reusify","version":"1.0.0","main":"index.js"}' > node_modules/reusify/package.json && \
-    echo 'module.exports = function reusify(Constructor) { return new Constructor(); };' > node_modules/reusify/index.js
-
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
 
@@ -56,11 +51,6 @@ COPY package*.json ./
 RUN rm -rf node_modules && \
     npm cache clean --force && \
     npm install --production --no-package-lock
-
-# Fix corrupted packages in production
-RUN mkdir -p node_modules/reusify && \
-    echo '{"name":"reusify","version":"1.0.0","main":"index.js"}' > node_modules/reusify/package.json && \
-    echo 'module.exports = function reusify(Constructor) { return new Constructor(); };' > node_modules/reusify/index.js
 
 # Generate Prisma client
 RUN npx prisma generate
