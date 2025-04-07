@@ -27,10 +27,10 @@ RUN npx prisma generate
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
 
-# Copy modules from repo
-COPY node_modules/es-abstract/node_modules/safe-regex-test ./node_modules/es-abstract/node_modules/safe-regex-test
-COPY node_modules/fastq/node_modules/reusify ./node_modules/fastq/node_modules/reusify
-COPY node_modules/next/node_modules/postcss ./node_modules/next/node_modules/postcss
+# Copy PostCSS files from repo
+COPY node_modules/next/node_modules/postcss/lib/symbols.js ./node_modules/next/node_modules/postcss/lib/symbols.js
+COPY node_modules/next/node_modules/postcss/lib/terminal-highlight.js ./node_modules/next/node_modules/postcss/lib/terminal-highlight.js
+COPY node_modules/next/node_modules/postcss/lib/stringifier.js ./node_modules/next/node_modules/postcss/lib/stringifier.js
 
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
@@ -50,9 +50,9 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
-COPY --from=builder /app/node_modules/next/node_modules/postcss ./node_modules/next/node_modules/postcss
-COPY --from=builder /app/node_modules/es-abstract/node_modules/safe-regex-test ./node_modules/es-abstract/node_modules/safe-regex-test
-COPY --from=builder /app/node_modules/fastq/node_modules/reusify ./node_modules/fastq/node_modules/reusify
+COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/symbols.js ./node_modules/next/node_modules/postcss/lib/symbols.js
+COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/terminal-highlight.js ./node_modules/next/node_modules/postcss/lib/terminal-highlight.js
+COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/stringifier.js ./node_modules/next/node_modules/postcss/lib/stringifier.js
 
 # Install production dependencies with a clean slate
 COPY package*.json ./
