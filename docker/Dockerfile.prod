@@ -27,6 +27,13 @@ RUN npx prisma generate
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
 
+# Fix corrupted packages
+RUN cd node_modules/es-abstract/node_modules && \
+    npm install safe-regex-test --no-package-lock && \
+    cd ../../../fastq/node_modules && \
+    npm install reusify --no-package-lock && \
+    cd ../../..
+
 # Clean up unnecessary files
 RUN rm -rf .next node_modules/.cache
 
@@ -46,17 +53,18 @@ COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/scripts ./scripts
 
-# Create necessary directories and copy PostCSS files
-RUN mkdir -p node_modules/next/node_modules/postcss/lib
-COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/symbols.js ./node_modules/next/node_modules/postcss/lib/
-COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/terminal-highlight.js ./node_modules/next/node_modules/postcss/lib/
-COPY --from=builder /app/node_modules/next/node_modules/postcss/lib/stringifier.js ./node_modules/next/node_modules/postcss/lib/
-
 # Install production dependencies with a clean slate
 COPY package*.json ./
 RUN rm -rf node_modules && \
     npm cache clean --force && \
     npm install --production --no-package-lock
+
+# Fix corrupted packages in production
+RUN cd node_modules/es-abstract/node_modules && \
+    npm install safe-regex-test --no-package-lock && \
+    cd ../../../fastq/node_modules && \
+    npm install reusify --no-package-lock && \
+    cd ../../..
 
 # Generate Prisma client
 RUN npx prisma generate
