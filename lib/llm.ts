@@ -15,8 +15,18 @@ const preferenceSchema = z.object({
     excludedWarnings: z.array(z.string())
 });
 
+// Default preferences to return in case of errors
+const DEFAULT_PREFERENCES = {
+    spiceLevel: 'Medium',
+    genres: ['contemporary', 'romantic comedy'],
+    contentWarnings: [],
+    excludedWarnings: []
+};
+
 export async function analyzeUserPreferences(message: string) {
     try {
+        console.log('Starting analyzeUserPreferences with message:', message);
+        
         const completion = await openai.chat.completions.create({
             model: "gpt-4-turbo",
             messages: [
@@ -58,23 +68,53 @@ You must return your response as a JSON object with the following structure:
             response_format: { type: "json_object" }
         });
 
-        const response = completion.choices[0].message.content || '{"spiceLevel":"Medium","genres":[],"contentWarnings":[],"excludedWarnings":[]}';
-        const parsedResponse = JSON.parse(response);
+        console.log('OpenAI API response received');
         
-        return {
-            spiceLevel: parsedResponse.spiceLevel || 'Medium',
-            genres: parsedResponse.genres || [],
-            contentWarnings: parsedResponse.contentWarnings || [],
-            excludedWarnings: parsedResponse.excludedWarnings || []
-        };
+        if (!completion.choices?.[0]?.message?.content) {
+            console.error('No content in OpenAI response');
+            return DEFAULT_PREFERENCES;
+        }
+
+        const response = completion.choices[0].message.content;
+        console.log('Raw OpenAI response:', response);
+
+        try {
+            const parsedResponse = JSON.parse(response);
+            console.log('Parsed response:', parsedResponse);
+            
+            // Validate the response against our schema
+            const validatedResponse = preferenceSchema.parse(parsedResponse);
+            console.log('Validated response:', validatedResponse);
+            
+            return validatedResponse;
+        } catch (parseError) {
+            console.error('Error parsing OpenAI response:', parseError);
+            
+            // Try to extract any useful information from the response
+            try {
+                const parsedResponse = JSON.parse(response);
+                return {
+                    spiceLevel: parsedResponse.spiceLevel || DEFAULT_PREFERENCES.spiceLevel,
+                    genres: Array.isArray(parsedResponse.genres) ? parsedResponse.genres : DEFAULT_PREFERENCES.genres,
+                    contentWarnings: Array.isArray(parsedResponse.contentWarnings) ? parsedResponse.contentWarnings : DEFAULT_PREFERENCES.contentWarnings,
+                    excludedWarnings: Array.isArray(parsedResponse.excludedWarnings) ? parsedResponse.excludedWarnings : DEFAULT_PREFERENCES.excludedWarnings
+                };
+            } catch (e) {
+                console.error('Failed to extract any useful information from response');
+                return DEFAULT_PREFERENCES;
+            }
+        }
     } catch (error) {
         console.error('Error analyzing user preferences:', error);
+        if (error instanceof Error) {
+            console.error('Error details:', {
+                message: error.message,
+                name: error.name,
+                stack: error.stack
+            });
+        }
+        
         // Return default preferences if there's an error
-        return {
-            spiceLevel: 'Medium',
-            genres: [],
-            contentWarnings: [],
-            excludedWarnings: []
-        };
+        return DEFAULT_PREFERENCES;
     }
 } 
