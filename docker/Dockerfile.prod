@@ -72,6 +72,9 @@ RUN npx prisma generate
 # Make init-db.sh executable in the runner stage
 RUN chmod +x scripts/init-db.sh
 
+# Copy environment variables
+COPY .env.local .env.local
+
 # Expose port
 EXPOSE 3000
 
