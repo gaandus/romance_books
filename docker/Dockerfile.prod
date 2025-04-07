@@ -15,15 +15,6 @@ RUN rm -rf node_modules && \
     npm cache clean --force && \
     npm install --no-package-lock
 
-# Create valid package.json files for corrupted dependencies
-RUN mkdir -p node_modules/safe-regex-test && \
-    echo '{"name":"safe-regex-test","version":"1.0.0","main":"index.js"}' > node_modules/safe-regex-test/package.json && \
-    echo 'module.exports = function safeRegexTest(re, string) { return RegExp.prototype.test.call(re, string); };' > node_modules/safe-regex-test/index.js
-
-RUN mkdir -p node_modules/reusify && \
-    echo '{"name":"reusify","version":"1.0.0","main":"index.js"}' > node_modules/reusify/package.json && \
-    echo 'module.exports = function reusify(Constructor) { return new Constructor(); };' > node_modules/reusify/index.js
-
 # Copy the rest of the application
 COPY . .
 
@@ -68,15 +59,6 @@ COPY package*.json ./
 RUN rm -rf node_modules && \
     npm cache clean --force && \
     npm install --production --no-package-lock
-
-# Create valid package.json files for corrupted dependencies in production
-RUN mkdir -p node_modules/safe-regex-test && \
-    echo '{"name":"safe-regex-test","version":"1.0.0","main":"index.js"}' > node_modules/safe-regex-test/package.json && \
-    echo 'module.exports = function safeRegexTest(re, string) { return RegExp.prototype.test.call(re, string); };' > node_modules/safe-regex-test/index.js
-
-RUN mkdir -p node_modules/reusify && \
-    echo '{"name":"reusify","version":"1.0.0","main":"index.js"}' > node_modules/reusify/package.json && \
-    echo 'module.exports = function reusify(Constructor) { return new Constructor(); };' > node_modules/reusify/index.js
 
 # Generate Prisma client
 RUN npx prisma generate
