@@ -21,8 +21,9 @@ COPY . .
 # Create public directory if it doesn't exist
 RUN mkdir -p public
 
-# Generate Prisma client
-RUN npx prisma generate
+# Install Prisma client and generate
+RUN npm install @prisma/client --force --no-package-lock && \
+    npx prisma generate
 
 # Make init-db.sh executable
 RUN chmod +x scripts/init-db.sh
@@ -50,7 +51,8 @@ COPY --from=builder /app/scripts ./scripts
 COPY package*.json ./
 RUN rm -rf node_modules && \
     npm cache clean --force && \
-    npm install --production --force --no-package-lock
+    npm install --production --force --no-package-lock && \
+    npm install @prisma/client --force --no-package-lock
 
 # Generate Prisma client
 RUN npx prisma generate
