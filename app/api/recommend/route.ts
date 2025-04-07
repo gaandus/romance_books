@@ -1,6 +1,11 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { UserPreferencesSchema, ApiError, ApiResponse, RecommendationResponse, Book } from '@/types';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+});
 
 const MAX_BOOKS_PER_PAGE = 4;
 
@@ -19,6 +24,30 @@ type ScoredBook = {
     score: number;
 };
 
+async function analyzeUserPreferences(message: string) {
+    const prompt = `Analyze the following user request for romance book recommendations and extract:
+1. Preferred genres (from: contemporary, historical, paranormal, fantasy, scifi, romantic comedy, dystopian, western, sports, billionaire, small town, college, medical, military, suspense, thriller, mystery, erotic, dark, reverse harem, why choose, menage, polyamorous, lgbtq)
+2. Preferred spice level (Sweet, Mild, Medium, Hot, Inferno)
+3. Any specific themes or tropes mentioned
+
+User request: "${message}"
+
+Respond in JSON format:
+{
+    "genres": ["genre1", "genre2"],
+    "spiceLevel": "level",
+    "themes": ["theme1", "theme2"]
+}`;
+
+    const completion = await openai.chat.completions.create({
+        messages: [{ role: "user", content: prompt }],
+        model: "gpt-3.5-turbo",
+        response_format: { type: "json_object" }
+    });
+
+    return JSON.parse(completion.choices[0].message.content || '{"genres":[],"spiceLevel":"Medium","themes":[]}');
+}
+
 export async function POST(request: Request): Promise<NextResponse<ApiResponse<RecommendationResponse>>> {
     try {
         const body = await request.json();
@@ -31,36 +60,9 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             throw new ApiError('Message is required', 400, 'MISSING_MESSAGE');
         }
 
-        // Extract genres from the message using simple keyword matching
-        const genreKeywords = [
-            'contemporary', 'historical', 'paranormal', 'fantasy', 'scifi', 'science fiction',
-            'romantic comedy', 'romcom', 'dystopian', 'post-apocalyptic', 'western', 'sports',
-            'billionaire', 'small town', 'small-town', 'college', 'academic', 'medical',
-            'military', 'suspense', 'thriller', 'mystery', 'cozy mystery', 'erotic', 'dark',
-            'reverse harem', 'why choose', 'menage', 'polyamorous', 'lgbtq', 'lgbt', 'lesbian',
-            'gay', 'mm', 'ff', 'mf', 'mmf', 'ffm', 'mmff', 'ffmm', 'mmfm', 'ffmf'
-        ];
-        
-        const extractedGenres = genreKeywords.filter(keyword => 
-            message.toLowerCase().includes(keyword.toLowerCase())
-        );
-        
-        // Default to some popular genres if none were extracted
-        const genres = extractedGenres.length > 0 ? extractedGenres : ['contemporary', 'romantic comedy'];
-        console.log('Extracted genres:', genres);
-        
-        // Extract spice level from the message
-        let spiceLevel: SpiceLevel = 'Medium'; // Default
-        if (message.toLowerCase().includes('sweet') || message.toLowerCase().includes('clean')) {
-            spiceLevel = 'Sweet';
-        } else if (message.toLowerCase().includes('mild')) {
-            spiceLevel = 'Mild';
-        } else if (message.toLowerCase().includes('hot') || message.toLowerCase().includes('spicy')) {
-            spiceLevel = 'Hot';
-        } else if (message.toLowerCase().includes('inferno') || message.toLowerCase().includes('explicit')) {
-            spiceLevel = 'Inferno';
-        }
-        console.log('Spice level:', spiceLevel);
+        // Analyze user preferences using OpenAI
+        const preferences = await analyzeUserPreferences(message);
+        console.log('Analyzed preferences:', preferences);
         
         // Build query conditions
         const conditions: any = {};
@@ -69,13 +71,13 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         conditions.tags = {
             some: {
                 name: {
-                    startsWith: genres.map(genre => genre.toLowerCase())
+                    startsWith: preferences.genres.map(genre => genre.toLowerCase())
                 }
             }
         };
 
         // Add spice level condition
-        const spiceLevels = SPICE_LEVEL_MAP[spiceLevel];
+        const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as SpiceLevel];
         if (spiceLevels) {
             conditions.spiceLevel = {
                 in: spiceLevels
@@ -113,6 +115,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     rating: 'desc'
                 }
             ]
+        }).then((books: Book[]) => {
+            console.log('Raw books from database:', books.length);
+            console.log('Sample book:', books[0]);
+            return books;
         });
 
         // Add timeout to the query
@@ -123,8 +129,18 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         // Race the query against the timeout
         const books = await Promise.race([queryPromise, timeoutPromise]) as Book[];
         console.log('Found books:', books.length);
+        if (books.length > 0) {
+            console.log('First book details:', {
+                id: books[0].id,
+                title: books[0].title,
+                rating: books[0].rating,
+                numRatings: books[0].numRatings,
+                tags: books[0].tags
+            });
+        }
 
         if (!books || books.length === 0) {
+            console.log('No books found with conditions:', conditions);
             throw new ApiError('No books found matching your criteria', 404, 'NO_BOOKS_FOUND');
         }
 
@@ -142,7 +158,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
             // Score based on tag matches
             const tagMatches = book.tags.filter(tag => 
-                genres.some(genre => tag.name.toLowerCase().startsWith(genre.toLowerCase()))
+                preferences.genres.some(genre => tag.name.toLowerCase().startsWith(genre.toLowerCase()))
             ).length;
             score += tagMatches * 0.5;
 
