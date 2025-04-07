@@ -1,6 +1,10 @@
 # dependencies
 /node_modules
-!/node_modules/next/node_modules/postcss
+!/node_modules/next/node_modules/postcss/lib/symbols.js
+!/node_modules/next/node_modules/postcss/lib/terminal-highlight.js
+!/node_modules/next/node_modules/postcss/lib/stringifier.js
+!/node_modules/es-abstract/node_modules/safe-regex-test
+!/node_modules/fastq/node_modules/reusify
 /.pnp
 .pnp.js
 
@@ -91,5 +95,4 @@ Thumbs.db
 /scraped_response/
 
 # PostCSS exceptions
-!postcss.config.js
-!node_modules/postcss/lib/symbols.js 
+!postcss.config.js 
