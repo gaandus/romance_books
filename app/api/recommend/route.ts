@@ -94,7 +94,92 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     spiceLevel: {
                         in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
                     }
+                } : {
+                    spiceLevel: {
+                        in: ['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching', 'Inferno']
+                    }
+                }),
+                ...(preferences.genres && preferences.genres.length > 0 ? {
+                    tags: {
+                        some: {
+                            AND: preferences.genres.map(genre => ({
+                                name: {
+                                    startsWith: genre.split('(')[0].trim(),
+                                    mode: 'insensitive'
+                                }
+                            }))
+                        }
+                    }
                 } : {}),
+                ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
+                    contentWarnings: {
+                        some: {
+                            AND: preferences.contentWarnings.map(warning => ({
+                                name: {
+                                    startsWith: warning.split('(')[0].trim(),
+                                    mode: 'insensitive'
+                                }
+                            }))
+                        }
+                    }
+                } : {}),
+                ...(preferences.excludedWarnings && preferences.excludedWarnings.length > 0 ? {
+                    NOT: {
+                        contentWarnings: {
+                            some: {
+                                OR: preferences.excludedWarnings.map(warning => ({
+                                    name: {
+                                        startsWith: warning.split('(')[0].trim(),
+                                        mode: 'insensitive'
+                                    }
+                                }))
+                            }
+                        }
+                    }
+                } : {}),
+                ...(previouslySeenBooks && previouslySeenBooks.length > 0 ? {
+                    id: {
+                        notIn: previouslySeenBooks
+                    }
+                } : {}),
+                ...(readBooks && readBooks.length > 0 ? {
+                    id: {
+                        notIn: [...(previouslySeenBooks || []), ...readBooks]
+                    }
+                } : {}),
+                ...(notInterestedBooks && notInterestedBooks.length > 0 ? {
+                    id: {
+                        notIn: [...(previouslySeenBooks || []), ...(readBooks || []), ...notInterestedBooks]
+                    }
+                } : {})
+            },
+            include: {
+                contentWarnings: true,
+                tags: true
+            },
+            orderBy: {
+                id: 'asc'
+            },
+            take: MAX_BOOKS_PER_PAGE
+        });
+
+        // If no books found with strict matching, try less strict matching
+        if (books.length === 0) {
+            console.log('API route: No books found with strict matching, trying less strict matching');
+            const lessStrictQuery = {
+                rating: {
+                    gte: 3.5,
+                    lte: 5
+                },
+                ...(preferences.spiceLevel ? {
+                    spiceLevel: {
+                        in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
+                    }
+                } : {
+                    spiceLevel: {
+                        in: ['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching', 'Inferno']
+                    }
+                }),
                 ...(preferences.genres && preferences.genres.length > 0 ? {
                     tags: {
                         some: {
@@ -148,85 +233,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                         notIn: [...(previouslySeenBooks || []), ...(readBooks || []), ...notInterestedBooks]
                     }
                 } : {})
-            },
-            include: {
-                contentWarnings: true,
-                tags: true
-            },
-            orderBy: {
-                id: 'asc'
-            },
-            take: MAX_BOOKS_PER_PAGE
-        });
-
-        // If no books found with strict matching, try less strict matching
-        if (books.length === 0) {
-            console.log('API route: No books found with strict matching, trying less strict matching');
+            };
+            
+            console.log('API route: Less strict query:', JSON.stringify(lessStrictQuery, null, 2));
+            
             books = await prisma.book.findMany({
-                where: {
-                    rating: {
-                        gte: 3.5,
-                        lte: 5
-                    },
-                    ...(preferences.spiceLevel ? {
-                        spiceLevel: {
-                            in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
-                        }
-                    } : {}),
-                    ...(preferences.genres && preferences.genres.length > 0 ? {
-                        tags: {
-                            some: {
-                                OR: preferences.genres.map(genre => ({
-                                    name: {
-                                        startsWith: genre.split('(')[0].trim(),
-                                        mode: 'insensitive'
-                                    }
-                                }))
-                            }
-                        }
-                    } : {}),
-                    ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
-                        contentWarnings: {
-                            some: {
-                                OR: preferences.contentWarnings.map(warning => ({
-                                    name: {
-                                        startsWith: warning.split('(')[0].trim(),
-                                        mode: 'insensitive'
-                                    }
-                                }))
-                            }
-                        }
-                    } : {}),
-                    ...(preferences.excludedWarnings && preferences.excludedWarnings.length > 0 ? {
-                        NOT: {
-                            contentWarnings: {
-                                some: {
-                                    OR: preferences.excludedWarnings.map(warning => ({
-                                        name: {
-                                            startsWith: warning.split('(')[0].trim(),
-                                            mode: 'insensitive'
-                                        }
-                                    }))
-                                }
-                            }
-                        }
-                    } : {}),
-                    ...(previouslySeenBooks && previouslySeenBooks.length > 0 ? {
-                        id: {
-                            notIn: previouslySeenBooks
-                        }
-                    } : {}),
-                    ...(readBooks && readBooks.length > 0 ? {
-                        id: {
-                            notIn: [...(previouslySeenBooks || []), ...readBooks]
-                        }
-                    } : {}),
-                    ...(notInterestedBooks && notInterestedBooks.length > 0 ? {
-                        id: {
-                            notIn: [...(previouslySeenBooks || []), ...(readBooks || []), ...notInterestedBooks]
-                        }
-                    } : {})
-                },
+                where: lessStrictQuery,
                 include: {
                     contentWarnings: true,
                     tags: true
@@ -236,6 +248,8 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 },
                 take: MAX_BOOKS_PER_PAGE
             });
+            
+            console.log('API route: Found books with less strict matching:', books.length);
         }
 
         // Randomize the results
