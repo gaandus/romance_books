@@ -23,36 +23,43 @@ type ScoredBook = {
 
 export async function POST(request: Request): Promise<NextResponse<ApiResponse<RecommendationResponse>>> {
     try {
+        console.log('API route: Starting request processing');
         const body = await request.json();
-        console.log('Request body:', body);
+        console.log('API route: Request body:', body);
         
         // Extract message from the request
         const { message } = body;
         
         if (!message) {
+            console.log('API route: Missing message in request');
             throw new ApiError('Message is required', 400, 'MISSING_MESSAGE');
         }
 
         // Analyze user preferences using OpenAI
         let preferences;
         try {
-            console.log('Environment check:', {
+            console.log('API route: Starting OpenAI analysis');
+            console.log('API route: Environment check:', {
                 hasOpenAIKey: !!process.env.OPENAI_API_KEY,
                 openAIKeyLength: process.env.OPENAI_API_KEY?.length,
-                nodeEnv: process.env.NODE_ENV
+                nodeEnv: process.env.NODE_ENV,
+                envKeys: Object.keys(process.env)
             });
             
             preferences = await analyzeUserPreferences(message);
-            console.log('Analyzed preferences:', preferences);
+            console.log('API route: Analyzed preferences:', preferences);
         } catch (error) {
-            console.error('Error analyzing preferences:', error);
+            console.error('API route: Error analyzing preferences:', error);
             if (error instanceof Error) {
-                console.error('Error details:', {
+                console.error('API route: Error details:', {
                     message: error.message,
                     name: error.name,
                     stack: error.stack,
                     cause: error.cause,
-                    error: error
+                    error: error,
+                    response: (error as any).response?.data,
+                    status: (error as any).response?.status,
+                    headers: (error as any).response?.headers
                 });
             }
             // Fallback to default preferences if analysis fails
@@ -64,6 +71,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             };
         }
         
+        console.log('API route: Building query conditions');
         // Build query conditions
         const conditions: any = {};
         
@@ -124,7 +132,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             };
         }
 
+        console.log('API route: Query conditions:', JSON.stringify(conditions, null, 2));
+
         // Query the database
+        console.log('API route: Querying database');
         const books = await prisma.book.findMany({
             where: conditions,
             include: {
@@ -133,8 +144,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             },
             take: MAX_BOOKS_PER_PAGE
         });
+        console.log('API route: Found books:', books.length);
 
         // Transform books to match the expected format
+        console.log('API route: Transforming books');
         const transformedBooks = books.map((book: Book & { tags: any[], contentWarnings: any[] }) => ({
             id: book.id,
             title: book.title,
@@ -163,6 +176,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             updatedAt: book.updatedAt
         }));
 
+        console.log('API route: Returning response');
         // Return the response
         return NextResponse.json({
             status: 200,
@@ -175,7 +189,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             }
         });
     } catch (error) {
-        console.error('Error in recommendation API:', error);
+        console.error('API route: Error in recommendation API:', error);
         return NextResponse.json({
             status: 500,
             message: error instanceof Error ? error.message : 'An unknown error occurred',
