@@ -174,10 +174,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             where: {
                 ...queryConditions,
                 AND: [
-                    // Tags must match all requested genres
+                    // Tags must match at least one requested genre
                     preferences.genres && preferences.genres.length > 0 ? {
                         tags: {
-                            every: {
+                            some: {
                                 OR: preferences.genres.map(genre => ({
                                     name: {
                                         contains: genre.split('(')[0].trim(),
@@ -187,10 +187,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                             }
                         }
                     } : {},
-                    // Content warnings must match all requested warnings
+                    // Content warnings must match at least one requested warning
                     preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                         contentWarnings: {
-                            every: {
+                            some: {
                                 OR: preferences.contentWarnings.map(warning => ({
                                     name: {
                                         contains: warning.split('(')[0].trim(),

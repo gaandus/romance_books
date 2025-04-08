@@ -192,7 +192,7 @@ export default function Home() {
                 </div>
             </header>
 
-            <main className="flex-1 container mx-auto px-4 py-8 overflow-y-auto">
+            <main className="flex-1 container mx-auto px-4 py-8 overflow-y-auto pb-32">
                 <div className="space-y-8">
                     {messages.map((msg, index) => (
                         <div key={index} ref={index === messages.length - 1 ? lastMessageRef : null}>
@@ -207,7 +207,7 @@ export default function Home() {
                 </div>
             </main>
 
-            <footer className="border-t bg-background">
+            <footer className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
                 <form onSubmit={handleSubmit} className="container mx-auto px-4 py-4">
                     <div className="flex gap-2">
                         <input
