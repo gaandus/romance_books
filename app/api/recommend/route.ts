@@ -168,16 +168,46 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
         console.log('API route: Query conditions:', JSON.stringify(queryConditions, null, 2));
 
-        // Query the database with strict matching first
-        console.log('API route: Querying database with strict matching');
+        // Query the database with strict matching first (AND)
+        console.log('API route: Querying database with strict matching (AND)');
         let books = await prisma.book.findMany({
-            where: queryConditions,
+            where: {
+                ...queryConditions,
+                AND: [
+                    // Tags must match all requested genres
+                    preferences.genres && preferences.genres.length > 0 ? {
+                        tags: {
+                            every: {
+                                OR: preferences.genres.map(genre => ({
+                                    name: {
+                                        contains: genre.split('(')[0].trim(),
+                                        mode: 'insensitive'
+                                    }
+                                }))
+                            }
+                        }
+                    } : {},
+                    // Content warnings must match all requested warnings
+                    preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
+                        contentWarnings: {
+                            every: {
+                                OR: preferences.contentWarnings.map(warning => ({
+                                    name: {
+                                        contains: warning.split('(')[0].trim(),
+                                        mode: 'insensitive'
+                                    }
+                                }))
+                            }
+                        }
+                    } : {}
+                ]
+            },
             include: {
                 contentWarnings: true,
                 tags: true
             },
             orderBy: {
-                id: 'asc'  // We'll randomize the results in memory
+                id: 'asc'
             },
             take: MAX_BOOKS_PER_PAGE
         });
@@ -185,16 +215,70 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         // Randomize the results
         books = books.sort(() => Math.random() - 0.5);
 
-        // If no books found, try more lenient matching
+        // If no books found, try less strict matching (OR)
         if (books.length === 0) {
-            console.log('API route: No books found with strict matching, trying more lenient query');
+            console.log('API route: No books found with strict matching, trying OR matching');
             
-            // Create a more lenient query with only rating constraint
+            books = await prisma.book.findMany({
+                where: {
+                    ...queryConditions,
+                    OR: [
+                        // Tags can match any requested genre
+                        preferences.genres && preferences.genres.length > 0 ? {
+                            tags: {
+                                some: {
+                                    OR: preferences.genres.map(genre => ({
+                                        name: {
+                                            contains: genre.split('(')[0].trim(),
+                                            mode: 'insensitive'
+                                        }
+                                    }))
+                                }
+                            }
+                        } : {},
+                        // Content warnings can match any requested warning
+                        preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
+                            contentWarnings: {
+                                some: {
+                                    OR: preferences.contentWarnings.map(warning => ({
+                                        name: {
+                                            contains: warning.split('(')[0].trim(),
+                                            mode: 'insensitive'
+                                        }
+                                    }))
+                                }
+                            }
+                        } : {}
+                    ]
+                },
+                include: {
+                    contentWarnings: true,
+                    tags: true
+                },
+                orderBy: {
+                    id: 'asc'
+                },
+                take: MAX_BOOKS_PER_PAGE
+            });
+
+            // Randomize the results
+            books = books.sort(() => Math.random() - 0.5);
+        }
+
+        // If still no books found, try most lenient matching (only rating and spice level)
+        if (books.length === 0) {
+            console.log('API route: No books found with OR matching, trying most lenient query');
+            
             const lenientQuery = {
                 rating: {
                     gte: 3.5,
                     lte: 5
-                }
+                },
+                ...(preferences.spiceLevel ? {
+                    spiceLevel: {
+                        in: spiceLevelMap[preferences.spiceLevel] || []
+                    }
+                } : {})
             };
             
             books = await prisma.book.findMany({
@@ -204,15 +288,13 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     tags: true
                 },
                 orderBy: {
-                    id: 'asc'  // We'll randomize the results in memory
+                    id: 'asc'
                 },
                 take: MAX_BOOKS_PER_PAGE
             });
 
             // Randomize the results
             books = books.sort(() => Math.random() - 0.5);
-            
-            console.log('API route: Found books with lenient query:', books.length);
         }
 
         // Transform books to match the expected format
