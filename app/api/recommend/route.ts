@@ -29,7 +29,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         console.log('API route: Request body:', body);
         
         // Extract message from the request
-        const { message } = body;
+        const { message, readBooks = [], notInterestedBooks = [], previouslySeenBooks = [] } = body;
         
         if (!message) {
             console.log('API route: Missing message in request');
@@ -97,6 +97,36 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             }
         }
 
+        // Add previously seen books to excluded list
+        if (previouslySeenBooks && previouslySeenBooks.length > 0) {
+            queryConditions.NOT = {
+                ...queryConditions.NOT,
+                id: {
+                    in: previouslySeenBooks
+                }
+            };
+        }
+
+        // Add read books to excluded list
+        if (readBooks && readBooks.length > 0) {
+            queryConditions.NOT = {
+                ...queryConditions.NOT,
+                id: {
+                    in: readBooks
+                }
+            };
+        }
+
+        // Add not interested books to excluded list
+        if (notInterestedBooks && notInterestedBooks.length > 0) {
+            queryConditions.NOT = {
+                ...queryConditions.NOT,
+                id: {
+                    in: notInterestedBooks
+                }
+            };
+        }
+
         // Add content warnings condition if specified
         if (preferences.contentWarnings && preferences.contentWarnings.length > 0) {
             queryConditions.contentWarnings = {
@@ -137,6 +167,9 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 contentWarnings: true,
                 tags: true
             },
+            orderBy: {
+                _rand: true
+            },
             take: MAX_BOOKS_PER_PAGE
         });
 
@@ -157,6 +190,9 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 include: {
                     contentWarnings: true,
                     tags: true
+                },
+                orderBy: {
+                    _rand: true
                 },
                 take: MAX_BOOKS_PER_PAGE
             });
