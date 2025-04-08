@@ -37,7 +37,7 @@ export async function analyzeUserPreferences(message: string) {
             messages: [
                 {
                     role: "system",
-                    content: `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format.
+                    content: `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format. Please respond in JSON format.
 
 For content warnings, distinguish between warnings they want to include and warnings they want to exclude.
 
@@ -70,6 +70,8 @@ You must return your response as a JSON object with the following structure:
                     content: message
                 }
             ],
+            temperature: 0.7,
+            max_tokens: 1000,
             response_format: { type: "json_object" }
         });
 
@@ -86,6 +88,13 @@ You must return your response as a JSON object with the following structure:
         try {
             const parsedResponse = JSON.parse(response);
             console.log('Parsed response:', parsedResponse);
+            
+            // Validate the response structure
+            if (!parsedResponse.spiceLevel || !Array.isArray(parsedResponse.genres)) {
+                console.error('Invalid response structure:', parsedResponse);
+                return DEFAULT_PREFERENCES;
+            }
+            
             return parsedResponse;
         } catch (parseError) {
             console.error('Error parsing OpenAI response:', parseError);
