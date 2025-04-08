@@ -3,12 +3,13 @@ import OpenAI from 'openai';
 // Initialize OpenAI client with configuration
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
+    dangerouslyAllowBrowser: true
 });
 
 // Log environment details for debugging
-console.log('Environment variables:', {
-    hasApiKey: !!process.env.OPENAI_API_KEY,
-    apiKeyLength: process.env.OPENAI_API_KEY?.length,
+console.log('Environment check:', {
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    openAIKeyLength: process.env.OPENAI_API_KEY?.length,
     nodeEnv: process.env.NODE_ENV
 });
 
@@ -104,7 +105,10 @@ You must return your response as a JSON object with the following structure:
             console.error('Error details:', {
                 message: error.message,
                 name: error.name,
-                stack: error.stack
+                stack: error.stack,
+                response: (error as any).response?.data,
+                status: (error as any).response?.status,
+                headers: (error as any).response?.headers
             });
         }
         return DEFAULT_PREFERENCES;

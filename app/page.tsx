@@ -58,14 +58,15 @@ export default function Home() {
             console.log('API Response:', {
                 status: response.status,
                 message: userMessage,
-                booksCount: data.books?.length,
-                books: data.books,
-                firstBook: data.books?.[0],
-                totalBooks: data.totalBooks,
-                hasMore: data.hasMore
+                booksCount: data.data?.books?.length,
+                books: data.data?.books,
+                firstBook: data.data?.books?.[0],
+                totalBooks: data.data?.total,
+                hasMore: data.data?.hasMore,
+                rawResponse: data
             });
 
-            if (!data.books || data.books.length === 0) {
+            if (!data.data?.books || data.data.books.length === 0) {
                 console.error('No books returned from API');
                 setMessages(prev => [...prev, {
                     message: userMessage,
@@ -77,7 +78,7 @@ export default function Home() {
             // Add the new message with books
             setMessages(prev => [...prev, {
                 message: userMessage,
-                books: data.books,
+                books: data.data.books,
             }]);
 
         } catch (error) {
