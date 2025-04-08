@@ -178,9 +178,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     preferences.genres && preferences.genres.length > 0 ? {
                         tags: {
                             every: {
-                                name: {
-                                    in: preferences.genres.map(genre => genre.split('(')[0].trim())
-                                }
+                                AND: preferences.genres.map(genre => ({
+                                    name: {
+                                        contains: genre.split('(')[0].trim(),
+                                        mode: 'insensitive'
+                                    }
+                                }))
                             }
                         }
                     } : {},
@@ -188,9 +191,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                         contentWarnings: {
                             every: {
-                                name: {
-                                    in: preferences.contentWarnings.map(warning => warning.split('(')[0].trim())
-                                }
+                                AND: preferences.contentWarnings.map(warning => ({
+                                    name: {
+                                        contains: warning.split('(')[0].trim(),
+                                        mode: 'insensitive'
+                                    }
+                                }))
                             }
                         }
                     } : {}
