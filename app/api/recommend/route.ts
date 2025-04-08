@@ -70,59 +70,47 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         }
         
         console.log('API route: Building query conditions');
-        // Build query conditions
-        const conditions: any = {};
-        
-        // Add genre conditions
-        if (preferences?.genres?.length > 0) {
-            conditions.tags = {
-                some: {
-                    OR: preferences.genres.map((genre: string) => ({
-                        name: {
-                            contains: genre.toLowerCase()
-                        }
-                    }))
-                }
-            };
-        }
+        // Build query conditions based on preferences
+        const queryConditions: any = {
+            rating: {
+                gte: 3.5,
+                lte: 5
+            }
+        };
 
-        // Add spice level condition
-        if (preferences?.spiceLevel) {
-            const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as keyof typeof SPICE_LEVEL_MAP];
+        // Add spice level condition if specified
+        if (preferences.spiceLevel) {
+            const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as SpiceLevel];
             if (spiceLevels) {
-                conditions.spiceLevel = {
+                queryConditions.spiceLevel = {
                     in: spiceLevels
                 };
             }
         }
 
-        // Add rating condition
-        conditions.rating = {
-            gte: 3.5,
-            lte: 5.0
-        };
-
-        // Add content warning conditions
-        if (preferences?.contentWarnings?.length > 0) {
-            conditions.contentWarnings = {
+        // Add content warnings condition if specified
+        if (preferences.contentWarnings && preferences.contentWarnings.length > 0) {
+            queryConditions.contentWarnings = {
                 some: {
-                    OR: preferences.contentWarnings.map((warning: string) => ({
+                    OR: preferences.contentWarnings.map(warning => ({
                         name: {
-                            contains: warning.toLowerCase()
+                            contains: warning,
+                            mode: 'insensitive'
                         }
                     }))
                 }
             };
         }
 
-        // Exclude books with warnings the user doesn't want
-        if (preferences?.excludedWarnings?.length > 0) {
-            conditions.NOT = {
+        // Add excluded warnings condition if specified
+        if (preferences.excludedWarnings && preferences.excludedWarnings.length > 0) {
+            queryConditions.NOT = {
                 contentWarnings: {
                     some: {
-                        OR: preferences.excludedWarnings.map((warning: string) => ({
+                        OR: preferences.excludedWarnings.map(warning => ({
                             name: {
-                                contains: warning.toLowerCase()
+                                contains: warning,
+                                mode: 'insensitive'
                             }
                         }))
                     }
@@ -130,59 +118,66 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             };
         }
 
-        console.log('API route: Query conditions:', JSON.stringify(conditions, null, 2));
+        console.log('API route: Query conditions:', JSON.stringify(queryConditions, null, 2));
 
-        // Query the database
-        console.log('API route: Querying database');
-        const books = await prisma.book.findMany({
-            where: conditions,
+        // Query the database with strict matching first
+        console.log('API route: Querying database with strict matching');
+        let books = await prisma.book.findMany({
+            where: queryConditions,
             include: {
-                tags: true,
-                contentWarnings: true
+                contentWarnings: true,
+                tags: true
             },
             take: MAX_BOOKS_PER_PAGE
         });
-        console.log('API route: Found books:', books.length);
+
+        // If no books found, try more lenient matching
+        if (books.length === 0) {
+            console.log('API route: No books found with strict matching, trying more lenient query');
+            
+            // Create a more lenient query by removing some constraints
+            const lenientQuery = { ...queryConditions };
+            
+            // Remove content warnings and tags constraints
+            delete lenientQuery.contentWarnings;
+            delete lenientQuery.tags;
+            
+            // Keep spice level and rating constraints
+            books = await prisma.book.findMany({
+                where: lenientQuery,
+                include: {
+                    contentWarnings: true,
+                    tags: true
+                },
+                take: MAX_BOOKS_PER_PAGE
+            });
+            
+            console.log('API route: Found books with lenient query:', books.length);
+        }
 
         // Transform books to match the expected format
         console.log('API route: Transforming books');
-        const transformedBooks = books.map((book: Book & { tags: any[], contentWarnings: any[] }) => ({
+        const transformedBooks = books.map((book: Book & { tags: { name: string }[], contentWarnings: { name: string }[] }) => ({
             id: book.id,
             title: book.title,
             author: book.author,
-            url: book.url,
             rating: book.rating,
             numRatings: book.numRatings,
             spiceLevel: book.spiceLevel,
             summary: book.summary,
-            tags: book.tags.map((tag: { id: string, name: string }) => ({
-                id: tag.id,
-                name: tag.name.split('(')[0].trim(),
-                count: parseInt(tag.name.match(/\((\d+)\)/)?.[1] || '0')
-            })),
-            contentWarnings: book.contentWarnings.map((cw: { id: string, name: string }) => ({
-                id: cw.id,
-                name: cw.name.split('(')[0].trim(),
-                count: parseInt(cw.name.match(/\((\d+)\)/)?.[1] || '0')
-            })),
-            series: null,
-            seriesNumber: book.seriesNumber,
-            pageCount: null,
-            publishedDate: book.publishedDate,
-            scrapedStatus: book.scrapedStatus,
-            createdAt: book.createdAt,
-            updatedAt: book.updatedAt
+            url: book.url,
+            tags: book.tags.map(tag => tag.name),
+            contentWarnings: book.contentWarnings.map(warning => warning.name)
         }));
 
-        console.log('API route: Returning response');
         // Return the response
+        console.log('API route: Returning response');
         return NextResponse.json({
             status: 200,
             message: 'Success',
             data: {
                 books: transformedBooks,
                 total: transformedBooks.length,
-                page: 1,
                 hasMore: false
             }
         });
