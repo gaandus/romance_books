@@ -1,4 +1,6 @@
+// Import OpenAI using require-style import for compatibility
 import OpenAI from 'openai';
+import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 // Initialize OpenAI client with configuration
 const openai = new OpenAI({
