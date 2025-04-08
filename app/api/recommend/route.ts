@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { UserPreferencesSchema, ApiError, ApiResponse, RecommendationResponse, Book } from '@/types';
-import { analyzeUserPreferences } from '@/lib/llm';
+import { analyzeUserPreferences } from '@/lib/llm.js';
 
 const MAX_BOOKS_PER_PAGE = 4;
 
@@ -48,6 +48,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             
             preferences = await analyzeUserPreferences(message);
             console.log('API route: Analyzed preferences:', preferences);
+            
+            // Validate preferences
+            if (!preferences || !preferences.spiceLevel || !Array.isArray(preferences.genres)) {
+                console.error('API route: Invalid preferences returned from OpenAI:', preferences);
+                throw new ApiError('Failed to analyze preferences', 500, 'INVALID_PREFERENCES');
+            }
         } catch (error) {
             console.error('API route: Error analyzing preferences:', error);
             if (error instanceof Error) {
@@ -55,20 +61,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     message: error.message,
                     name: error.name,
                     stack: error.stack,
-                    cause: error.cause,
-                    error: error,
                     response: (error as any).response?.data,
                     status: (error as any).response?.status,
                     headers: (error as any).response?.headers
                 });
             }
-            // Fallback to default preferences if analysis fails
-            preferences = {
-                spiceLevel: 'Medium',
-                genres: ['contemporary', 'romantic comedy'],
-                contentWarnings: [],
-                excludedWarnings: []
-            };
+            throw new ApiError('Failed to analyze preferences', 500, 'ANALYSIS_ERROR');
         }
         
         console.log('API route: Building query conditions');
