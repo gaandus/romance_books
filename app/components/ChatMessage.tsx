@@ -134,8 +134,8 @@ export default function ChatMessage({
                                             <span className="text-xs font-medium text-muted-foreground">Tags:</span>
                                             <div className="flex flex-wrap gap-1">
                                                 {(showAllTags[book.id] ? book.tags : book.tags.slice(0, 3)).map((tag) => (
-                                                    <Badge key={tag} variant="secondary" className="text-xs hover:bg-secondary/80">
-                                                        {tag}
+                                                    <Badge key={tag.id} variant="secondary" className="text-xs hover:bg-secondary/80">
+                                                        {tag.name}
                                                     </Badge>
                                                 ))}
                                                 {book.tags.length > 3 && (
@@ -156,8 +156,8 @@ export default function ChatMessage({
                                                 <span className="text-xs font-medium text-muted-foreground">Warnings:</span>
                                                 <div className="flex flex-wrap gap-1">
                                                     {(showAllWarnings[book.id] ? book.contentWarnings : book.contentWarnings.slice(0, 3)).map((warning) => (
-                                                        <Badge key={warning} variant="destructive" className="text-xs hover:bg-destructive/80">
-                                                            {warning}
+                                                        <Badge key={warning.id} variant="destructive" className="text-xs hover:bg-destructive/80">
+                                                            {warning.name}
                                                         </Badge>
                                                     ))}
                                                     {book.contentWarnings.length > 3 && (

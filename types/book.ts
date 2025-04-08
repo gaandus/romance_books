@@ -1,3 +1,15 @@
+export interface Tag {
+    id: string;
+    name: string;
+    count: number;
+}
+
+export interface ContentWarning {
+    id: string;
+    name: string;
+    count: number;
+}
+
 export interface Book {
     id: string;
     title: string;
@@ -7,8 +19,8 @@ export interface Book {
     numRatings: number;
     spiceLevel: string | null;
     summary: string;
-    tags: string[];
-    contentWarnings: string[];
+    tags: Tag[];
+    contentWarnings: ContentWarning[];
     series: string | null;
     seriesNumber: number | null;
     pageCount: number | null;
