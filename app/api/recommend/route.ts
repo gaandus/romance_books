@@ -91,10 +91,16 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         if (preferences.spiceLevel) {
             const spiceLevels = spiceLevelMap[preferences.spiceLevel] || [];
             if (spiceLevels.length > 0) {
+                console.log('API route: Adding spice level condition:', {
+                    requested: preferences.spiceLevel,
+                    mapped: spiceLevels
+                });
                 queryConditions.spiceLevel = {
                     in: spiceLevels
                 };
             }
+        } else {
+            console.log('API route: No spice level specified, including all levels');
         }
 
         // Add previously seen books to excluded list
@@ -172,26 +178,44 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         console.log('API route: Querying database with strict matching (AND)');
         let books = await prisma.book.findMany({
             where: {
-                ...queryConditions,
-                AND: [
-                    // Tags must match ALL requested genres
-                    preferences.genres && preferences.genres.length > 0 ? {
-                        tags: {
-                            every: {
-                                AND: preferences.genres.map(genre => ({
-                                    name: {
-                                        contains: genre.split('(')[0].trim(),
-                                        mode: 'insensitive'
-                                    }
-                                }))
-                            }
+                rating: {
+                    gte: 3.5,
+                    lte: 5
+                },
+                ...(preferences.spiceLevel ? {
+                    spiceLevel: {
+                        in: spiceLevelMap[preferences.spiceLevel] || []
+                    }
+                } : {}),
+                ...(preferences.genres && preferences.genres.length > 0 ? {
+                    tags: {
+                        every: {
+                            AND: preferences.genres.map(genre => ({
+                                name: {
+                                    contains: genre.split('(')[0].trim(),
+                                    mode: 'insensitive'
+                                }
+                            }))
                         }
-                    } : {},
-                    // Content warnings must match ALL requested warnings
-                    preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
+                    }
+                } : {}),
+                ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
+                    contentWarnings: {
+                        every: {
+                            AND: preferences.contentWarnings.map(warning => ({
+                                name: {
+                                    contains: warning.split('(')[0].trim(),
+                                    mode: 'insensitive'
+                                }
+                            }))
+                        }
+                    }
+                } : {}),
+                ...(preferences.excludedWarnings && preferences.excludedWarnings.length > 0 ? {
+                    NOT: {
                         contentWarnings: {
-                            every: {
-                                AND: preferences.contentWarnings.map(warning => ({
+                            some: {
+                                OR: preferences.excludedWarnings.map(warning => ({
                                     name: {
                                         contains: warning.split('(')[0].trim(),
                                         mode: 'insensitive'
@@ -199,8 +223,23 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                                 }))
                             }
                         }
-                    } : {}
-                ]
+                    }
+                } : {}),
+                ...(previouslySeenBooks && previouslySeenBooks.length > 0 ? {
+                    id: {
+                        notIn: previouslySeenBooks
+                    }
+                } : {}),
+                ...(readBooks && readBooks.length > 0 ? {
+                    id: {
+                        notIn: [...(previouslySeenBooks || []), ...readBooks]
+                    }
+                } : {}),
+                ...(notInterestedBooks && notInterestedBooks.length > 0 ? {
+                    id: {
+                        notIn: [...(previouslySeenBooks || []), ...(readBooks || []), ...notInterestedBooks]
+                    }
+                } : {})
             },
             include: {
                 contentWarnings: true,
