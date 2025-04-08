@@ -71,110 +71,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         }
         
         console.log('API route: Building query conditions');
-        // Build query conditions based on preferences
-        const queryConditions: any = {
-            rating: {
-                gte: 3.5,
-                lte: 5
-            }
-        };
-
-        // Map spice level to database values
-        const spiceLevelMap: Record<string, string[]> = {
-            'Sweet': ['1 of 5'],
-            'Mild': ['2 of 5'],
-            'Medium': ['3 of 5'],
-            'Hot': ['4 of 5', '5 of 5']
-        };
-
-        // Add spice level condition if specified
-        if (preferences.spiceLevel) {
-            const spiceLevels = spiceLevelMap[preferences.spiceLevel] || [];
-            if (spiceLevels.length > 0) {
-                console.log('API route: Adding spice level condition:', {
-                    requested: preferences.spiceLevel,
-                    mapped: spiceLevels
-                });
-                queryConditions.spiceLevel = {
-                    in: spiceLevels
-                };
-            }
-        } else {
-            console.log('API route: No spice level specified, including all levels');
-        }
-
-        // Add previously seen books to excluded list
-        if (previouslySeenBooks && previouslySeenBooks.length > 0) {
-            queryConditions.id = {
-                notIn: previouslySeenBooks
-            };
-        }
-
-        // Add read books to excluded list
-        if (readBooks && readBooks.length > 0) {
-            queryConditions.id = {
-                ...queryConditions.id,
-                notIn: [...(queryConditions.id?.notIn || []), ...readBooks]
-            };
-        }
-
-        // Add not interested books to excluded list
-        if (notInterestedBooks && notInterestedBooks.length > 0) {
-            queryConditions.id = {
-                ...queryConditions.id,
-                notIn: [...(queryConditions.id?.notIn || []), ...notInterestedBooks]
-            };
-        }
-
-        // Add tags condition if specified
-        if (preferences.genres && preferences.genres.length > 0) {
-            console.log('API route: Adding tag conditions for:', preferences.genres);
-            queryConditions.tags = {
-                some: {
-                    OR: preferences.genres.map(genre => ({
-                        name: {
-                            contains: genre.split('(')[0].trim(),
-                            mode: 'insensitive'
-                        }
-                    }))
-                }
-            };
-            console.log('API route: Tag conditions:', JSON.stringify(queryConditions.tags, null, 2));
-        }
-
-        // Add content warnings condition if specified
-        if (preferences.contentWarnings && preferences.contentWarnings.length > 0) {
-            queryConditions.contentWarnings = {
-                some: {
-                    OR: preferences.contentWarnings.map(warning => ({
-                        name: {
-                            contains: warning.split('(')[0].trim(),
-                            mode: 'insensitive'
-                        }
-                    }))
-                }
-            };
-        }
-
-        // Add excluded warnings condition if specified
-        if (preferences.excludedWarnings && preferences.excludedWarnings.length > 0) {
-            queryConditions.NOT = {
-                contentWarnings: {
-                    some: {
-                        OR: preferences.excludedWarnings.map(warning => ({
-                            name: {
-                                contains: warning.split('(')[0].trim(),
-                                mode: 'insensitive'
-                            }
-                        }))
-                    }
-                }
-            };
-        }
-
-        console.log('API route: Query conditions:', JSON.stringify(queryConditions, null, 2));
-
-        // Query the database with strict matching first (AND)
+        // Build query conditions
         console.log('API route: Querying database with strict matching (AND)');
         let books = await prisma.book.findMany({
             where: {
@@ -184,7 +81,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 },
                 ...(preferences.spiceLevel ? {
                     spiceLevel: {
-                        in: spiceLevelMap[preferences.spiceLevel] || []
+                        in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
                     }
                 } : {}),
                 ...(preferences.genres && preferences.genres.length > 0 ? {
@@ -251,35 +148,49 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             take: MAX_BOOKS_PER_PAGE
         });
 
-        // Randomize the results
-        books = books.sort(() => Math.random() - 0.5);
-
-        // If no books found, try less strict matching (OR)
+        // If no books found with strict matching, try less strict matching
         if (books.length === 0) {
-            console.log('API route: No books found with strict matching, trying OR matching');
-            
+            console.log('API route: No books found with strict matching, trying less strict matching');
             books = await prisma.book.findMany({
                 where: {
-                    ...queryConditions,
-                    OR: [
-                        // Tags can match any requested genre
-                        preferences.genres && preferences.genres.length > 0 ? {
-                            tags: {
-                                some: {
-                                    OR: preferences.genres.map(genre => ({
-                                        name: {
-                                            contains: genre.split('(')[0].trim(),
-                                            mode: 'insensitive'
-                                        }
-                                    }))
-                                }
+                    rating: {
+                        gte: 3.5,
+                        lte: 5
+                    },
+                    ...(preferences.spiceLevel ? {
+                        spiceLevel: {
+                            in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
+                        }
+                    } : {}),
+                    ...(preferences.genres && preferences.genres.length > 0 ? {
+                        tags: {
+                            some: {
+                                OR: preferences.genres.map(genre => ({
+                                    name: {
+                                        contains: genre.split('(')[0].trim(),
+                                        mode: 'insensitive'
+                                    }
+                                }))
                             }
-                        } : {},
-                        // Content warnings can match any requested warning
-                        preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
+                        }
+                    } : {}),
+                    ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
+                        contentWarnings: {
+                            some: {
+                                OR: preferences.contentWarnings.map(warning => ({
+                                    name: {
+                                        contains: warning.split('(')[0].trim(),
+                                        mode: 'insensitive'
+                                    }
+                                }))
+                            }
+                        }
+                    } : {}),
+                    ...(preferences.excludedWarnings && preferences.excludedWarnings.length > 0 ? {
+                        NOT: {
                             contentWarnings: {
                                 some: {
-                                    OR: preferences.contentWarnings.map(warning => ({
+                                    OR: preferences.excludedWarnings.map(warning => ({
                                         name: {
                                             contains: warning.split('(')[0].trim(),
                                             mode: 'insensitive'
@@ -287,8 +198,23 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                                     }))
                                 }
                             }
-                        } : {}
-                    ]
+                        }
+                    } : {}),
+                    ...(previouslySeenBooks && previouslySeenBooks.length > 0 ? {
+                        id: {
+                            notIn: previouslySeenBooks
+                        }
+                    } : {}),
+                    ...(readBooks && readBooks.length > 0 ? {
+                        id: {
+                            notIn: [...(previouslySeenBooks || []), ...readBooks]
+                        }
+                    } : {}),
+                    ...(notInterestedBooks && notInterestedBooks.length > 0 ? {
+                        id: {
+                            notIn: [...(previouslySeenBooks || []), ...(readBooks || []), ...notInterestedBooks]
+                        }
+                    } : {})
                 },
                 include: {
                     contentWarnings: true,
@@ -299,42 +225,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 },
                 take: MAX_BOOKS_PER_PAGE
             });
-
-            // Randomize the results
-            books = books.sort(() => Math.random() - 0.5);
         }
 
-        // If still no books found, try most lenient matching (only rating and spice level)
-        if (books.length === 0) {
-            console.log('API route: No books found with OR matching, trying most lenient query');
-            
-            const lenientQuery = {
-                rating: {
-                    gte: 3.5,
-                    lte: 5
-                },
-                ...(preferences.spiceLevel ? {
-                    spiceLevel: {
-                        in: spiceLevelMap[preferences.spiceLevel] || []
-                    }
-                } : {})
-            };
-            
-            books = await prisma.book.findMany({
-                where: lenientQuery,
-                include: {
-                    contentWarnings: true,
-                    tags: true
-                },
-                orderBy: {
-                    id: 'asc'
-                },
-                take: MAX_BOOKS_PER_PAGE
-            });
-
-            // Randomize the results
-            books = books.sort(() => Math.random() - 0.5);
-        }
+        // Randomize the results
+        books = books.sort(() => Math.random() - 0.5);
 
         // Transform books to match the expected format
         console.log('API route: Transforming books');
