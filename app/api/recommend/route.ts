@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { UserPreferencesSchema, ApiError, ApiResponse, RecommendationResponse, Book } from '@/types';
+import { Tag, ContentWarning } from '@/types/book';
 import { analyzeUserPreferences } from '@/lib/llm.js';
 
 const MAX_BOOKS_PER_PAGE = 4;
@@ -165,7 +166,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
         // Transform books to match the expected format
         console.log('API route: Transforming books');
-        const transformedBooks = books.map((book: Book & { tags: { name: string }[], contentWarnings: { name: string }[] }) => ({
+        const transformedBooks = books.map((book: Book & { tags: Tag[], contentWarnings: ContentWarning[] }) => ({
             id: book.id,
             title: book.title,
             author: book.author,
@@ -174,8 +175,8 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             spiceLevel: book.spiceLevel,
             summary: book.summary,
             url: book.url,
-            tags: book.tags.map(tag => tag.name),
-            contentWarnings: book.contentWarnings.map(warning => warning.name)
+            tags: book.tags,
+            contentWarnings: book.contentWarnings
         }));
 
         // Return the response

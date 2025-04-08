@@ -126,10 +126,10 @@ export default function Home() {
             const data = await response.json();
             
             // Add new recommendations to display
-            if (data.books && data.books.length > 0) {
+            if (data.data?.books && data.data.books.length > 0) {
                 setMessages(prev => prev.map((msg, index) => 
                     index === prev.length - 1 
-                        ? { ...msg, books: [...msg.books, ...data.books] }
+                        ? { ...msg, books: [...msg.books, ...data.data.books] }
                         : msg
                 ));
             }
@@ -172,10 +172,10 @@ export default function Home() {
             const data = await response.json();
             
             // Add new recommendations to display
-            if (data.books && data.books.length > 0) {
+            if (data.data?.books && data.data.books.length > 0) {
                 setMessages(prev => prev.map((msg, index) => 
                     index === prev.length - 1 
-                        ? { ...msg, books: [...msg.books, ...data.books] }
+                        ? { ...msg, books: [...msg.books, ...data.data.books] }
                         : msg
                 ));
             }
