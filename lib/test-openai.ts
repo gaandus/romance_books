@@ -33,7 +33,9 @@ async function testOpenAIRequest() {
     }
     
     try {
-        const completion = await openai.chat.completions.create({
+        // Test 1: Simple JSON response
+        console.log('\nTest 1: Simple JSON response');
+        const completion1 = await openai.chat.completions.create({
             model: "gpt-4-turbo-preview",
             messages: [
                 {
@@ -49,14 +51,41 @@ async function testOpenAIRequest() {
             max_tokens: 1000,
             response_format: { type: "json_object" }
         });
-        
-        console.log('Success! Response:', completion.choices[0].message.content);
+        console.log('Test 1 Success! Response:', completion1.choices[0].message.content);
+
+        // Test 2: Complex JSON response with specific structure
+        console.log('\nTest 2: Complex JSON response');
+        const completion2 = await openai.chat.completions.create({
+            model: "gpt-4-turbo-preview",
+            messages: [
+                {
+                    role: "system",
+                    content: `You are a romance book recommendation assistant. Please respond in JSON format with the following structure:
+{
+    "spiceLevel": "Medium",
+    "genres": ["contemporary"],
+    "contentWarnings": [],
+    "excludedWarnings": []
+}`
+                },
+                {
+                    role: "user",
+                    content: "I like spicy books"
+                }
+            ],
+            temperature: 0.7,
+            max_tokens: 1000,
+            response_format: { type: "json_object" }
+        });
+        console.log('Test 2 Success! Response:', completion2.choices[0].message.content);
+
     } catch (error) {
         console.error('Error details:', {
             message: error instanceof Error ? error.message : 'Unknown error',
             name: error instanceof Error ? error.name : 'Unknown',
             stack: error instanceof Error ? error.stack : undefined,
-            error: error
+            error: error,
+            fullError: JSON.stringify(error, null, 2)
         });
     }
 }

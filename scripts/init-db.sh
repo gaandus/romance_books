@@ -7,10 +7,7 @@ done
 echo "PostgreSQL is ready!"
 
 echo "Running migrations..."
-# First, create the migration if it doesn't exist
-npx prisma migrate dev --name init --create-only
-
-# Then apply the migration
+# Apply the migrations
 npx prisma migrate deploy
 
 echo "Importing initial data..."

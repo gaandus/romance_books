@@ -36,6 +36,12 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         // Analyze user preferences using OpenAI
         let preferences;
         try {
+            console.log('Environment check:', {
+                hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+                openAIKeyLength: process.env.OPENAI_API_KEY?.length,
+                nodeEnv: process.env.NODE_ENV
+            });
+            
             preferences = await analyzeUserPreferences(message);
             console.log('Analyzed preferences:', preferences);
         } catch (error) {
@@ -45,7 +51,8 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     message: error.message,
                     name: error.name,
                     stack: error.stack,
-                    cause: error.cause
+                    cause: error.cause,
+                    error: error
                 });
             }
             // Fallback to default preferences if analysis fails
