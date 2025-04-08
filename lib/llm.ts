@@ -3,28 +3,33 @@ import OpenAI from 'openai';
 // Initialize OpenAI client with configuration
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
-    dangerouslyAllowBrowser: true
 });
 
 // Log environment details for debugging
 console.log('Environment check:', {
     hasOpenAIKey: !!process.env.OPENAI_API_KEY,
     openAIKeyLength: process.env.OPENAI_API_KEY?.length,
-    nodeEnv: process.env.NODE_ENV
+    nodeEnv: process.env.NODE_ENV,
+    envKeys: Object.keys(process.env)
 });
 
+interface UserPreferences {
+    spiceLevel: 'Sweet' | 'Mild' | 'Medium' | 'Hot' | 'Scorching' | 'Inferno';
+    genres: string[];
+    contentWarnings: string[];
+    excludedWarnings: string[];
+}
+
 // Default preferences to return in case of errors
-const DEFAULT_PREFERENCES = {
+const DEFAULT_PREFERENCES: UserPreferences = {
     spiceLevel: 'Medium',
     genres: ['contemporary', 'romantic comedy'],
     contentWarnings: [],
     excludedWarnings: []
 };
 
-export async function analyzeUserPreferences(message: string) {
+export async function analyzeUserPreferences(message: string): Promise<UserPreferences> {
     console.log('Starting analyzeUserPreferences with message:', message);
-    console.log('Message type:', typeof message);
-    console.log('Message length:', message.length);
     
     if (!process.env.OPENAI_API_KEY) {
         console.error('OpenAI API key is not configured');
@@ -32,12 +37,12 @@ export async function analyzeUserPreferences(message: string) {
     }
     
     try {
-        // Build the request object
-        const requestBody = {
-            model: "gpt-3.5-turbo" as const,
+        console.log('Making OpenAI API request...');
+        const completion = await openai.chat.completions.create({
+            model: "gpt-3.5-turbo",
             messages: [
                 {
-                    role: "system" as const,
+                    role: "system",
                     content: `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format. Please respond in JSON format.
 
 For content warnings, distinguish between warnings they want to include and warnings they want to exclude.
@@ -67,19 +72,14 @@ You must return your response as a JSON object with the following structure:
 }`
                 },
                 {
-                    role: "user" as const,
+                    role: "user",
                     content: message
                 }
             ],
             temperature: 0.7,
             max_tokens: 1000,
-            response_format: { type: "json_object" as const }
-        };
-        
-        console.log('OpenAI API request:', JSON.stringify(requestBody, null, 2));
-        console.log('Making OpenAI API request with message:', message);
-        
-        const completion = await openai.chat.completions.create(requestBody);
+            response_format: { type: "json_object" }
+        });
 
         console.log('OpenAI API response received');
         console.log('Raw response:', completion);
@@ -93,7 +93,7 @@ You must return your response as a JSON object with the following structure:
         console.log('Raw OpenAI response:', response);
 
         try {
-            const parsedResponse = JSON.parse(response);
+            const parsedResponse = JSON.parse(response) as UserPreferences;
             console.log('Parsed response:', parsedResponse);
             
             // Validate the response structure
