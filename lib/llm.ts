@@ -3,8 +3,6 @@ import OpenAI from 'openai';
 // Initialize OpenAI client with configuration
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
-    maxRetries: 3,
-    timeout: 30000
 });
 
 // Log environment details for debugging
@@ -33,7 +31,7 @@ export async function analyzeUserPreferences(message: string) {
     try {
         console.log('Making OpenAI API request...');
         const completion = await openai.chat.completions.create({
-            model: "gpt-4-turbo-preview",
+            model: "gpt-3.5-turbo",
             messages: [
                 {
                     role: "system",
