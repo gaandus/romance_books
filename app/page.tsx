@@ -103,14 +103,14 @@ export default function Home() {
             // Add to read books
             setReadBooks(prev => [...prev, bookId]);
             
-            // Get new recommendations
+            // Get new recommendations without sending a new message
             const response = await fetch('/api/recommend', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    message: messages[messages.length - 1].message,
+                    message: "",  // Empty message to skip OpenAI analysis
                     readBooks: [...readBooks, bookId],
                     notInterestedBooks,
                     previouslySeenBooks: messages.flatMap(msg => 
@@ -149,14 +149,14 @@ export default function Home() {
             // Add to not interested books
             setNotInterestedBooks(prev => [...prev, bookId]);
             
-            // Get new recommendations
+            // Get new recommendations without sending a new message
             const response = await fetch('/api/recommend', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    message: messages[messages.length - 1].message,
+                    message: "",  // Empty message to skip OpenAI analysis
                     readBooks,
                     notInterestedBooks: [...notInterestedBooks, bookId],
                     previouslySeenBooks: messages.flatMap(msg => 

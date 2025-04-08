@@ -31,43 +31,54 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         // Extract message from the request
         const { message, readBooks = [], notInterestedBooks = [], previouslySeenBooks = [] } = body;
         
+        let preferences: {
+            spiceLevel: SpiceLevel;
+            genres: string[];
+            contentWarnings: string[];
+            excludedWarnings: string[];
+        };
+        
         if (!message) {
-            console.log('API route: Missing message in request');
-            throw new ApiError('Message is required', 400, 'MISSING_MESSAGE');
-        }
-
-        // Analyze user preferences using OpenAI
-        let preferences;
-        try {
-            console.log('API route: Starting OpenAI analysis');
-            console.log('API route: Environment check:', {
-                hasOpenAIKey: !!process.env.OPENAI_API_KEY,
-                openAIKeyLength: process.env.OPENAI_API_KEY?.length,
-                nodeEnv: process.env.NODE_ENV,
-                envKeys: Object.keys(process.env)
-            });
-            
-            preferences = await analyzeUserPreferences(message);
-            console.log('API route: Analyzed preferences:', preferences);
-            
-            // Validate preferences
-            if (!preferences || !preferences.spiceLevel || !Array.isArray(preferences.genres)) {
-                console.error('API route: Invalid preferences returned from OpenAI:', preferences);
-                throw new ApiError('Failed to analyze preferences', 500, 'INVALID_PREFERENCES');
-            }
-        } catch (error) {
-            console.error('API route: Error analyzing preferences:', error);
-            if (error instanceof Error) {
-                console.error('API route: Error details:', {
-                    message: error.message,
-                    name: error.name,
-                    stack: error.stack,
-                    response: (error as any).response?.data,
-                    status: (error as any).response?.status,
-                    headers: (error as any).response?.headers
+            console.log('API route: Empty message, using default preferences');
+            preferences = {
+                spiceLevel: 'Medium',
+                genres: [],
+                contentWarnings: [],
+                excludedWarnings: []
+            };
+        } else {
+            // Analyze user preferences using OpenAI
+            try {
+                console.log('API route: Starting OpenAI analysis');
+                console.log('API route: Environment check:', {
+                    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+                    openAIKeyLength: process.env.OPENAI_API_KEY?.length,
+                    nodeEnv: process.env.NODE_ENV,
+                    envKeys: Object.keys(process.env)
                 });
+                
+                preferences = await analyzeUserPreferences(message);
+                console.log('API route: Analyzed preferences:', preferences);
+                
+                // Validate preferences
+                if (!preferences || !preferences.spiceLevel || !Array.isArray(preferences.genres)) {
+                    console.error('API route: Invalid preferences returned from OpenAI:', preferences);
+                    throw new ApiError('Failed to analyze preferences', 500, 'INVALID_PREFERENCES');
+                }
+            } catch (error) {
+                console.error('API route: Error analyzing preferences:', error);
+                if (error instanceof Error) {
+                    console.error('API route: Error details:', {
+                        message: error.message,
+                        name: error.name,
+                        stack: error.stack,
+                        response: (error as any).response?.data,
+                        status: (error as any).response?.status,
+                        headers: (error as any).response?.headers
+                    });
+                }
+                throw new ApiError('Failed to analyze preferences', 500, 'ANALYSIS_ERROR');
             }
-            throw new ApiError('Failed to analyze preferences', 500, 'ANALYSIS_ERROR');
         }
         
         console.log('API route: Building query conditions');
@@ -86,10 +97,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 } : {}),
                 ...(preferences.genres && preferences.genres.length > 0 ? {
                     tags: {
-                        every: {
-                            AND: preferences.genres.map(genre => ({
+                        some: {
+                            OR: preferences.genres.map(genre => ({
                                 name: {
-                                    contains: genre.split('(')[0].trim(),
+                                    startsWith: genre.split('(')[0].trim(),
                                     mode: 'insensitive'
                                 }
                             }))
@@ -98,10 +109,10 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 } : {}),
                 ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                     contentWarnings: {
-                        every: {
-                            AND: preferences.contentWarnings.map(warning => ({
+                        some: {
+                            OR: preferences.contentWarnings.map(warning => ({
                                 name: {
-                                    contains: warning.split('(')[0].trim(),
+                                    startsWith: warning.split('(')[0].trim(),
                                     mode: 'insensitive'
                                 }
                             }))
@@ -114,7 +125,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                             some: {
                                 OR: preferences.excludedWarnings.map(warning => ({
                                     name: {
-                                        contains: warning.split('(')[0].trim(),
+                                        startsWith: warning.split('(')[0].trim(),
                                         mode: 'insensitive'
                                     }
                                 }))
@@ -167,7 +178,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                             some: {
                                 OR: preferences.genres.map(genre => ({
                                     name: {
-                                        contains: genre.split('(')[0].trim(),
+                                        startsWith: genre.split('(')[0].trim(),
                                         mode: 'insensitive'
                                     }
                                 }))
@@ -179,7 +190,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                             some: {
                                 OR: preferences.contentWarnings.map(warning => ({
                                     name: {
-                                        contains: warning.split('(')[0].trim(),
+                                        startsWith: warning.split('(')[0].trim(),
                                         mode: 'insensitive'
                                     }
                                 }))
@@ -192,7 +203,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                                 some: {
                                     OR: preferences.excludedWarnings.map(warning => ({
                                         name: {
-                                            contains: warning.split('(')[0].trim(),
+                                            startsWith: warning.split('(')[0].trim(),
                                             mode: 'insensitive'
                                         }
                                     }))
