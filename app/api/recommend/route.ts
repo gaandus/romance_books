@@ -99,32 +99,41 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
         // Add previously seen books to excluded list
         if (previouslySeenBooks && previouslySeenBooks.length > 0) {
-            queryConditions.NOT = {
-                ...queryConditions.NOT,
-                id: {
-                    in: previouslySeenBooks
-                }
+            queryConditions.id = {
+                notIn: previouslySeenBooks
             };
         }
 
         // Add read books to excluded list
         if (readBooks && readBooks.length > 0) {
-            queryConditions.NOT = {
-                ...queryConditions.NOT,
-                id: {
-                    in: readBooks
-                }
+            queryConditions.id = {
+                ...queryConditions.id,
+                notIn: [...(queryConditions.id?.notIn || []), ...readBooks]
             };
         }
 
         // Add not interested books to excluded list
         if (notInterestedBooks && notInterestedBooks.length > 0) {
-            queryConditions.NOT = {
-                ...queryConditions.NOT,
-                id: {
-                    in: notInterestedBooks
+            queryConditions.id = {
+                ...queryConditions.id,
+                notIn: [...(queryConditions.id?.notIn || []), ...notInterestedBooks]
+            };
+        }
+
+        // Add tags condition if specified
+        if (preferences.genres && preferences.genres.length > 0) {
+            console.log('API route: Adding tag conditions for:', preferences.genres);
+            queryConditions.tags = {
+                some: {
+                    OR: preferences.genres.map(genre => ({
+                        name: {
+                            contains: genre.split('(')[0].trim(),
+                            mode: 'insensitive'
+                        }
+                    }))
                 }
             };
+            console.log('API route: Tag conditions:', JSON.stringify(queryConditions.tags, null, 2));
         }
 
         // Add content warnings condition if specified
