@@ -186,14 +186,14 @@ export default function Home() {
 
     return (
         <div className="min-h-screen flex flex-col">
-            <header className="border-b bg-background">
-                <div className="container mx-auto px-4 py-4">
-                    <h1 className="text-2xl font-bold">Romance Book Recommender</h1>
+            <header className="border-b bg-background sticky top-0 z-50">
+                <div className="container mx-auto px-4 py-3">
+                    <h1 className="text-xl sm:text-2xl font-bold">Romance Book Recommender</h1>
                 </div>
             </header>
 
-            <main className="flex-1 container mx-auto px-4 py-8 overflow-y-auto pb-32">
-                <div className="space-y-8">
+            <main className="flex-1 container mx-auto px-4 py-4 sm:py-8 overflow-y-auto pb-24 sm:pb-32">
+                <div className="space-y-6 sm:space-y-8">
                     {messages.map((msg, index) => (
                         <div key={index} ref={index === messages.length - 1 ? lastMessageRef : null}>
                             <ChatMessage
@@ -207,9 +207,9 @@ export default function Home() {
                 </div>
             </main>
 
-            <footer className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-                <form onSubmit={handleSubmit} className="container mx-auto px-4 py-4">
-                    <div className="flex gap-2">
+            <footer className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
+                <form onSubmit={handleSubmit} className="container mx-auto px-4 py-3">
+                    <div className="flex flex-col sm:flex-row gap-2">
                         <input
                             type="text"
                             value={input}
@@ -218,7 +218,7 @@ export default function Home() {
                             className="flex-1 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={isLoading}
                         />
-                        <Button type="submit" disabled={isLoading}>
+                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                             {isLoading ? 'Loading...' : 'Get Recommendations'}
                         </Button>
                     </div>

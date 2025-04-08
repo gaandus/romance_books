@@ -67,27 +67,27 @@ export default function ChatMessage({
     };
 
     return (
-        <div className="flex flex-col space-y-6">
+        <div className="flex flex-col space-y-4 sm:space-y-6">
             {/* Chat Message */}
-            <div className="bg-card rounded-lg shadow-sm border p-4 max-w-2xl mx-auto w-full">
-                <p className="text-card-foreground leading-relaxed">{message}</p>
+            <div className="bg-card rounded-lg shadow-sm border p-3 sm:p-4 max-w-2xl mx-auto w-full">
+                <p className="text-card-foreground leading-relaxed text-sm sm:text-base">{message}</p>
             </div>
 
             {/* Book Cards */}
             {Array.isArray(books) && books.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                     {books.map((book) => (
                         <Card key={book.id} className="flex flex-col hover:shadow-lg transition-shadow duration-200">
                             <CardHeader className="pb-2">
                                 <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-lg font-semibold">
+                                    <CardTitle className="text-base sm:text-lg font-semibold line-clamp-2">
                                         {book.title}
                                     </CardTitle>
                                     <a 
                                         href={book.url} 
                                         target="_blank" 
                                         rel="noopener noreferrer"
-                                        className="text-primary hover:text-primary/80 transition-colors"
+                                        className="text-primary hover:text-primary/80 transition-colors flex-shrink-0"
                                         title="View on Romance.io"
                                     >
                                         <ExternalLink className="h-4 w-4" />
@@ -96,25 +96,25 @@ export default function ChatMessage({
                             </CardHeader>
                             <CardContent className="flex-1">
                                 <div className="space-y-2">
-                                    <p className="text-sm text-muted-foreground">by {book.author}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground">by {book.author}</p>
                                     
                                     {book.series && (
-                                        <p className="text-sm text-muted-foreground">
+                                        <p className="text-xs sm:text-sm text-muted-foreground">
                                             Book {book.seriesNumber} in {book.series}
                                         </p>
                                     )}
 
                                     <div className="flex items-center gap-2">
-                                        <span className="text-sm font-medium">⭐ {book.rating.toFixed(1)}</span>
-                                        <span className="text-sm text-muted-foreground">({book.numRatings} ratings)</span>
+                                        <span className="text-xs sm:text-sm font-medium">⭐ {book.rating.toFixed(1)}</span>
+                                        <span className="text-xs sm:text-sm text-muted-foreground">({book.numRatings} ratings)</span>
                                     </div>
 
-                                    <div className="spice-level text-sm" data-level={book.spiceLevel}>
+                                    <div className="spice-level text-xs sm:text-sm" data-level={book.spiceLevel}>
                                         Spice Level
                                     </div>
 
                                     <div className="relative">
-                                        <p className={`text-sm ${!showFullSummary[book.id] ? 'line-clamp-3' : ''}`}>
+                                        <p className={`text-xs sm:text-sm ${!showFullSummary[book.id] ? 'line-clamp-3' : ''}`}>
                                             {book.summary}
                                         </p>
                                         {book.summary.length > 150 && (
@@ -130,8 +130,8 @@ export default function ChatMessage({
                                     </div>
 
                                     <div className="space-y-1">
-                                        <div className="flex items-center gap-1">
-                                            <span className="text-xs font-medium text-muted-foreground">Tags:</span>
+                                        <div className="flex items-start gap-1">
+                                            <span className="text-xs font-medium text-muted-foreground mt-1">Tags:</span>
                                             <div className="flex flex-wrap gap-1">
                                                 {(showAllTags[book.id] ? book.tags : book.tags.slice(0, 3)).map((tag) => (
                                                     <Badge key={tag.id} variant="secondary" className="text-xs hover:bg-secondary/80">
@@ -152,8 +152,8 @@ export default function ChatMessage({
                                         </div>
                                         
                                         {book.contentWarnings && book.contentWarnings.length > 0 && (
-                                            <div className="flex items-center gap-1">
-                                                <span className="text-xs font-medium text-muted-foreground">Warnings:</span>
+                                            <div className="flex items-start gap-1">
+                                                <span className="text-xs font-medium text-muted-foreground mt-1">Warnings:</span>
                                                 <div className="flex flex-wrap gap-1">
                                                     {(showAllWarnings[book.id] ? book.contentWarnings : book.contentWarnings.slice(0, 3)).map((warning) => (
                                                         <Badge key={warning.id} variant="destructive" className="text-xs hover:bg-destructive/80">
@@ -176,12 +176,12 @@ export default function ChatMessage({
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex gap-2 mt-4">
+                            <CardFooter className="flex flex-col sm:flex-row gap-2 mt-4">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => onMarkAsRead(book.id)}
-                                    className="flex items-center gap-1 hover:bg-green-500/10 hover:text-green-500 hover:border-green-500/20"
+                                    className="flex items-center gap-1 hover:bg-green-500/10 hover:text-green-500 hover:border-green-500/20 w-full sm:w-auto"
                                 >
                                     <Bookmark className="h-4 w-4" />
                                     Mark as Read
@@ -190,7 +190,7 @@ export default function ChatMessage({
                                     variant="outline"
                                     size="sm"
                                     onClick={() => onMarkAsNotInterested(book.id)}
-                                    className="flex items-center gap-1 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20"
+                                    className="flex items-center gap-1 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 w-full sm:w-auto"
                                 >
                                     <XCircle className="h-4 w-4" />
                                     Not Interested
@@ -200,7 +200,7 @@ export default function ChatMessage({
                     ))}
                 </div>
             ) : (
-                <div className="text-center text-muted-foreground py-4">
+                <div className="text-center text-muted-foreground py-4 text-sm sm:text-base">
                     No books found matching your preferences. Try adjusting your search criteria.
                 </div>
             )}
