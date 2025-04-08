@@ -67,20 +67,20 @@ export default function ChatMessage({
     };
 
     return (
-        <div className="flex flex-col space-y-4 sm:space-y-6">
+        <div className="flex flex-col space-y-3 sm:space-y-6">
             {/* Chat Message */}
-            <div className="bg-card rounded-lg shadow-sm border p-3 sm:p-4 max-w-2xl mx-auto w-full">
+            <div className="bg-card rounded-lg shadow-sm border p-2.5 sm:p-4 max-w-2xl mx-auto w-full">
                 <p className="text-card-foreground leading-relaxed text-sm sm:text-base">{message}</p>
             </div>
 
             {/* Book Cards */}
             {Array.isArray(books) && books.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                     {books.map((book) => (
                         <Card key={book.id} className="flex flex-col hover:shadow-lg transition-shadow duration-200">
-                            <CardHeader className="pb-2">
+                            <CardHeader className="pb-1 sm:pb-2">
                                 <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-base sm:text-lg font-semibold line-clamp-2">
+                                    <CardTitle className="text-sm sm:text-lg font-semibold line-clamp-2">
                                         {book.title}
                                     </CardTitle>
                                     <a 
@@ -90,12 +90,12 @@ export default function ChatMessage({
                                         className="text-primary hover:text-primary/80 transition-colors flex-shrink-0"
                                         title="View on Romance.io"
                                     >
-                                        <ExternalLink className="h-4 w-4" />
+                                        <ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                     </a>
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex-1">
-                                <div className="space-y-2">
+                            <CardContent className="flex-1 py-2 sm:py-3">
+                                <div className="space-y-1.5 sm:space-y-2">
                                     <p className="text-xs sm:text-sm text-muted-foreground">by {book.author}</p>
                                     
                                     {book.series && (
@@ -104,7 +104,7 @@ export default function ChatMessage({
                                         </p>
                                     )}
 
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
                                         <span className="text-xs sm:text-sm font-medium">⭐ {book.rating.toFixed(1)}</span>
                                         <span className="text-xs sm:text-sm text-muted-foreground">({book.numRatings} ratings)</span>
                                     </div>
@@ -114,14 +114,14 @@ export default function ChatMessage({
                                     </div>
 
                                     <div className="relative">
-                                        <p className={`text-xs sm:text-sm ${!showFullSummary[book.id] ? 'line-clamp-3' : ''}`}>
+                                        <p className={`text-xs sm:text-sm ${!showFullSummary[book.id] ? 'line-clamp-2 sm:line-clamp-3' : ''}`}>
                                             {book.summary}
                                         </p>
                                         {book.summary.length > 150 && (
                                             <Button
                                                 variant="ghost"
                                                 size="sm"
-                                                className="text-xs h-6 px-2 hover:bg-accent/80 mt-1"
+                                                className="text-xs h-5 sm:h-6 px-1.5 sm:px-2 hover:bg-accent/80 mt-0.5 sm:mt-1"
                                                 onClick={() => toggleSummary(book.id)}
                                             >
                                                 {showFullSummary[book.id] ? 'Show Less' : 'Show More'}
@@ -131,10 +131,10 @@ export default function ChatMessage({
 
                                     <div className="space-y-1">
                                         <div className="flex items-start gap-1">
-                                            <span className="text-xs font-medium text-muted-foreground mt-1">Tags:</span>
+                                            <span className="text-xs font-medium text-muted-foreground mt-0.5 sm:mt-1">Tags:</span>
                                             <div className="flex flex-wrap gap-1">
                                                 {(showAllTags[book.id] ? book.tags : book.tags.slice(0, 3)).map((tag) => (
-                                                    <Badge key={tag.id} variant="secondary" className="text-xs hover:bg-secondary/80">
+                                                    <Badge key={tag.id} variant="secondary" className="text-[10px] sm:text-xs hover:bg-secondary/80">
                                                         {tag.name}
                                                     </Badge>
                                                 ))}
@@ -142,7 +142,7 @@ export default function ChatMessage({
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        className="text-xs h-6 px-2 hover:bg-accent/80"
+                                                        className="text-[10px] sm:text-xs h-5 sm:h-6 px-1.5 sm:px-2 hover:bg-accent/80"
                                                         onClick={() => toggleTags(book.id)}
                                                     >
                                                         {showAllTags[book.id] ? 'Show Less' : `+${book.tags.length - 3} More`}
@@ -153,10 +153,10 @@ export default function ChatMessage({
                                         
                                         {book.contentWarnings && book.contentWarnings.length > 0 && (
                                             <div className="flex items-start gap-1">
-                                                <span className="text-xs font-medium text-muted-foreground mt-1">Warnings:</span>
+                                                <span className="text-xs font-medium text-muted-foreground mt-0.5 sm:mt-1">Warnings:</span>
                                                 <div className="flex flex-wrap gap-1">
                                                     {(showAllWarnings[book.id] ? book.contentWarnings : book.contentWarnings.slice(0, 3)).map((warning) => (
-                                                        <Badge key={warning.id} variant="destructive" className="text-xs hover:bg-destructive/80">
+                                                        <Badge key={warning.id} variant="destructive" className="text-[10px] sm:text-xs hover:bg-destructive/80">
                                                             {warning.name}
                                                         </Badge>
                                                     ))}
@@ -164,7 +164,7 @@ export default function ChatMessage({
                                                         <Button
                                                             variant="ghost"
                                                             size="sm"
-                                                            className="text-xs h-6 px-2 hover:bg-accent/80"
+                                                            className="text-[10px] sm:text-xs h-5 sm:h-6 px-1.5 sm:px-2 hover:bg-accent/80"
                                                             onClick={() => toggleWarnings(book.id)}
                                                         >
                                                             {showAllWarnings[book.id] ? 'Show Less' : `+${book.contentWarnings.length - 3} More`}
@@ -176,23 +176,23 @@ export default function ChatMessage({
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex flex-col sm:flex-row gap-2 mt-4">
+                            <CardFooter className="flex flex-col sm:flex-row gap-1.5 sm:gap-2 mt-2 sm:mt-4">
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => onMarkAsRead(book.id)}
-                                    className="flex items-center gap-1 hover:bg-green-500/10 hover:text-green-500 hover:border-green-500/20 w-full sm:w-auto"
+                                    className="flex items-center gap-1 hover:bg-green-500/10 hover:text-green-500 hover:border-green-500/20 w-full sm:w-auto h-8 sm:h-9"
                                 >
-                                    <Bookmark className="h-4 w-4" />
+                                    <Bookmark className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                     Mark as Read
                                 </Button>
                                 <Button
                                     variant="outline"
                                     size="sm"
                                     onClick={() => onMarkAsNotInterested(book.id)}
-                                    className="flex items-center gap-1 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 w-full sm:w-auto"
+                                    className="flex items-center gap-1 hover:bg-red-500/10 hover:text-red-500 hover:border-red-500/20 w-full sm:w-auto h-8 sm:h-9"
                                 >
-                                    <XCircle className="h-4 w-4" />
+                                    <XCircle className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                                     Not Interested
                                 </Button>
                             </CardFooter>
@@ -200,7 +200,7 @@ export default function ChatMessage({
                     ))}
                 </div>
             ) : (
-                <div className="text-center text-muted-foreground py-4 text-sm sm:text-base">
+                <div className="text-center text-muted-foreground py-3 sm:py-4 text-xs sm:text-base">
                     No books found matching your preferences. Try adjusting your search criteria.
                 </div>
             )}
