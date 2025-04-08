@@ -86,23 +86,23 @@
     @apply inline-flex items-center gap-1 text-sm;
   }
 
-  .spice-level[data-level="1"]::before {
+  .spice-level[data-level="1 of 5"]::before {
     content: "🔥";
   }
 
-  .spice-level[data-level="2"]::before {
+  .spice-level[data-level="2 of 5"]::before {
     content: "🔥🔥";
   }
 
-  .spice-level[data-level="3"]::before {
+  .spice-level[data-level="3 of 5"]::before {
     content: "🔥🔥🔥";
   }
 
-  .spice-level[data-level="4"]::before {
+  .spice-level[data-level="4 of 5"]::before {
     content: "🔥🔥🔥🔥";
   }
 
-  .spice-level[data-level="5"]::before {
+  .spice-level[data-level="5 of 5"]::before {
     content: "🔥🔥🔥🔥🔥";
   }
 

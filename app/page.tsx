@@ -187,12 +187,12 @@ export default function Home() {
     return (
         <div className="min-h-screen flex flex-col">
             <header className="border-b bg-background sticky top-0 z-50">
-                <div className="container mx-auto px-3 py-2">
+                <div className="w-full px-2 sm:px-3 py-2">
                     <h1 className="text-lg sm:text-2xl font-bold">Romance Book Recommender</h1>
                 </div>
             </header>
 
-            <main className="flex-1 container mx-auto px-3 py-3 sm:py-8 overflow-y-auto pb-20 sm:pb-32">
+            <main className="flex-1 w-full px-2 sm:px-3 py-3 sm:py-8 overflow-y-auto pb-20 sm:pb-32">
                 <div className="space-y-4 sm:space-y-8">
                     {messages.map((msg, index) => (
                         <div key={index} ref={index === messages.length - 1 ? lastMessageRef : null}>
@@ -208,14 +208,14 @@ export default function Home() {
             </main>
 
             <footer className="fixed bottom-0 left-0 right-0 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-                <form onSubmit={handleSubmit} className="container mx-auto px-3 py-2">
+                <form onSubmit={handleSubmit} className="w-full px-2 sm:px-3 py-2">
                     <div className="flex flex-col sm:flex-row gap-2">
                         <input
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             placeholder="Tell me what kind of romance books you like..."
-                            className="flex-1 rounded-md border border-input bg-background px-3 py-1.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="flex-1 rounded-md border border-input bg-background px-2 sm:px-3 py-1.5 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                             disabled={isLoading}
                         />
                         <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">

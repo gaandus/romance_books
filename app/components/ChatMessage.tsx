@@ -69,18 +69,18 @@ export default function ChatMessage({
     return (
         <div className="flex flex-col space-y-3 sm:space-y-6">
             {/* Chat Message */}
-            <div className="bg-card rounded-lg shadow-sm border p-2.5 sm:p-4 max-w-2xl mx-auto w-full">
-                <p className="text-card-foreground leading-relaxed text-sm sm:text-base">{message}</p>
+            <div className="bg-card rounded-lg shadow-sm border p-2 sm:p-4 w-full">
+                <p className="text-card-foreground leading-relaxed text-sm sm:text-base break-words">{message}</p>
             </div>
 
             {/* Book Cards */}
             {Array.isArray(books) && books.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-6">
                     {books.map((book) => (
                         <Card key={book.id} className="flex flex-col hover:shadow-lg transition-shadow duration-200">
-                            <CardHeader className="pb-1 sm:pb-2">
+                            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-4">
                                 <div className="flex items-start justify-between gap-2">
-                                    <CardTitle className="text-sm sm:text-lg font-semibold line-clamp-2">
+                                    <CardTitle className="text-sm sm:text-lg font-semibold line-clamp-2 break-words">
                                         {book.title}
                                     </CardTitle>
                                     <a 
@@ -94,12 +94,12 @@ export default function ChatMessage({
                                     </a>
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex-1 py-2 sm:py-3">
+                            <CardContent className="flex-1 py-2 sm:py-3 px-2 sm:px-4">
                                 <div className="space-y-1.5 sm:space-y-2">
-                                    <p className="text-xs sm:text-sm text-muted-foreground">by {book.author}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground break-words">by {book.author}</p>
                                     
                                     {book.series && (
-                                        <p className="text-xs sm:text-sm text-muted-foreground">
+                                        <p className="text-xs sm:text-sm text-muted-foreground break-words">
                                             Book {book.seriesNumber} in {book.series}
                                         </p>
                                     )}
@@ -114,7 +114,7 @@ export default function ChatMessage({
                                     </div>
 
                                     <div className="relative">
-                                        <p className={`text-xs sm:text-sm ${!showFullSummary[book.id] ? 'line-clamp-2 sm:line-clamp-3' : ''}`}>
+                                        <p className={`text-xs sm:text-sm break-words ${!showFullSummary[book.id] ? 'line-clamp-2 sm:line-clamp-3' : ''}`}>
                                             {book.summary}
                                         </p>
                                         {book.summary.length > 150 && (
@@ -134,7 +134,7 @@ export default function ChatMessage({
                                             <span className="text-xs font-medium text-muted-foreground mt-0.5 sm:mt-1">Tags:</span>
                                             <div className="flex flex-wrap gap-1">
                                                 {(showAllTags[book.id] ? book.tags : book.tags.slice(0, 3)).map((tag) => (
-                                                    <Badge key={tag.id} variant="secondary" className="text-[10px] sm:text-xs hover:bg-secondary/80">
+                                                    <Badge key={tag.id} variant="secondary" className="text-[10px] sm:text-xs hover:bg-secondary/80 break-words">
                                                         {tag.name}
                                                     </Badge>
                                                 ))}
@@ -156,7 +156,7 @@ export default function ChatMessage({
                                                 <span className="text-xs font-medium text-muted-foreground mt-0.5 sm:mt-1">Warnings:</span>
                                                 <div className="flex flex-wrap gap-1">
                                                     {(showAllWarnings[book.id] ? book.contentWarnings : book.contentWarnings.slice(0, 3)).map((warning) => (
-                                                        <Badge key={warning.id} variant="destructive" className="text-[10px] sm:text-xs hover:bg-destructive/80">
+                                                        <Badge key={warning.id} variant="destructive" className="text-[10px] sm:text-xs hover:bg-destructive/80 break-words">
                                                             {warning.name}
                                                         </Badge>
                                                     ))}
@@ -176,7 +176,7 @@ export default function ChatMessage({
                                     </div>
                                 </div>
                             </CardContent>
-                            <CardFooter className="flex flex-col sm:flex-row gap-1.5 sm:gap-2 mt-2 sm:mt-4">
+                            <CardFooter className="flex flex-col sm:flex-row gap-1.5 sm:gap-2 mt-2 sm:mt-4 px-2 sm:px-4">
                                 <Button
                                     variant="outline"
                                     size="sm"

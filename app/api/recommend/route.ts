@@ -9,11 +9,11 @@ const MAX_BOOKS_PER_PAGE = 4;
 // Spice level mapping
 const SPICE_LEVEL_MAP = {
     'Sweet': ['1 of 5'],
-    'Mild': ['1 of 5', '2 of 5'],
-    'Medium': ['1 of 5', '2 of 5', '3 of 5'],
-    'Hot': ['1 of 5', '2 of 5', '3 of 5', '4 of 5'],
-    'Scorching': ['1 of 5', '2 of 5', '3 of 5', '4 of 5', '5 of 5'],
-    'Inferno': ['1 of 5', '2 of 5', '3 of 5', '4 of 5', '5 of 5']
+    'Mild': ['2 of 5'],
+    'Medium': ['3 of 5'],
+    'Hot': ['4 of 5'],
+    'Scorching': ['5 of 5'],
+    'Inferno': ['5 of 5']
 } as const;
 
 type SpiceLevel = keyof typeof SPICE_LEVEL_MAP;
@@ -116,13 +116,13 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     }
                 } : {
                     spiceLevel: {
-                        in: ['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching', 'Inferno']
+                        in: ['1 of 5', '2 of 5', '3 of 5', '4 of 5', '5 of 5']
                     }
                 }),
                 ...(preferences.genres && preferences.genres.length > 0 ? {
                     tags: {
                         some: {
-                            OR: preferences.genres.map(genre => ({
+                            AND: preferences.genres.map(genre => ({
                                 name: {
                                     contains: genre.split('(')[0].trim(),
                                     mode: 'insensitive'
@@ -197,7 +197,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     }
                 } : {
                     spiceLevel: {
-                        in: ['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching', 'Inferno']
+                        in: ['1 of 5', '2 of 5', '3 of 5', '4 of 5', '5 of 5']
                     }
                 }),
                 ...(preferences.genres && preferences.genres.length > 0 ? {
