@@ -174,29 +174,23 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             where: {
                 ...queryConditions,
                 AND: [
-                    // Tags must match at least one requested genre
+                    // Tags must match ALL requested genres
                     preferences.genres && preferences.genres.length > 0 ? {
                         tags: {
-                            some: {
-                                OR: preferences.genres.map(genre => ({
-                                    name: {
-                                        contains: genre.split('(')[0].trim(),
-                                        mode: 'insensitive'
-                                    }
-                                }))
+                            every: {
+                                name: {
+                                    in: preferences.genres.map(genre => genre.split('(')[0].trim())
+                                }
                             }
                         }
                     } : {},
-                    // Content warnings must match at least one requested warning
+                    // Content warnings must match ALL requested warnings
                     preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                         contentWarnings: {
-                            some: {
-                                OR: preferences.contentWarnings.map(warning => ({
-                                    name: {
-                                        contains: warning.split('(')[0].trim(),
-                                        mode: 'insensitive'
-                                    }
-                                }))
+                            every: {
+                                name: {
+                                    in: preferences.contentWarnings.map(warning => warning.split('(')[0].trim())
+                                }
                             }
                         }
                     } : {}
