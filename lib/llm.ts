@@ -23,6 +23,8 @@ const DEFAULT_PREFERENCES = {
 
 export async function analyzeUserPreferences(message: string) {
     console.log('Starting analyzeUserPreferences with message:', message);
+    console.log('Message type:', typeof message);
+    console.log('Message length:', message.length);
     
     if (!process.env.OPENAI_API_KEY) {
         console.error('OpenAI API key is not configured');
@@ -30,12 +32,12 @@ export async function analyzeUserPreferences(message: string) {
     }
     
     try {
-        console.log('Making OpenAI API request...');
-        const completion = await openai.chat.completions.create({
-            model: "gpt-3.5-turbo",
+        // Build the request object
+        const requestBody = {
+            model: "gpt-3.5-turbo" as const,
             messages: [
                 {
-                    role: "system",
+                    role: "system" as const,
                     content: `You are a romance book recommendation assistant. Analyze the user's message and extract their preferences in a structured format. Please respond in JSON format.
 
 For content warnings, distinguish between warnings they want to include and warnings they want to exclude.
@@ -65,16 +67,22 @@ You must return your response as a JSON object with the following structure:
 }`
                 },
                 {
-                    role: "user",
+                    role: "user" as const,
                     content: message
                 }
             ],
             temperature: 0.7,
             max_tokens: 1000,
-            response_format: { type: "json_object" }
-        });
+            response_format: { type: "json_object" as const }
+        };
+        
+        console.log('OpenAI API request:', JSON.stringify(requestBody, null, 2));
+        console.log('Making OpenAI API request with message:', message);
+        
+        const completion = await openai.chat.completions.create(requestBody);
 
         console.log('OpenAI API response received');
+        console.log('Raw response:', completion);
 
         if (!completion.choices?.[0]?.message?.content) {
             console.error('No content in OpenAI response');
