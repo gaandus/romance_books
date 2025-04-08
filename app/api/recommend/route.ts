@@ -168,10 +168,13 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 tags: true
             },
             orderBy: {
-                _rand: true
+                id: 'asc'  // We'll randomize the results in memory
             },
             take: MAX_BOOKS_PER_PAGE
         });
+
+        // Randomize the results
+        books = books.sort(() => Math.random() - 0.5);
 
         // If no books found, try more lenient matching
         if (books.length === 0) {
@@ -192,10 +195,13 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     tags: true
                 },
                 orderBy: {
-                    _rand: true
+                    id: 'asc'  // We'll randomize the results in memory
                 },
                 take: MAX_BOOKS_PER_PAGE
             });
+
+            // Randomize the results
+            books = books.sort(() => Math.random() - 0.5);
             
             console.log('API route: Found books with lenient query:', books.length);
         }
