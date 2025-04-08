@@ -78,10 +78,18 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             }
         };
 
+        // Map spice level to database values
+        const spiceLevelMap: Record<string, string[]> = {
+            'Sweet': ['1 of 5'],
+            'Mild': ['2 of 5'],
+            'Medium': ['3 of 5'],
+            'Hot': ['4 of 5', '5 of 5']
+        };
+
         // Add spice level condition if specified
         if (preferences.spiceLevel) {
-            const spiceLevels = SPICE_LEVEL_MAP[preferences.spiceLevel as SpiceLevel];
-            if (spiceLevels) {
+            const spiceLevels = spiceLevelMap[preferences.spiceLevel] || [];
+            if (spiceLevels.length > 0) {
                 queryConditions.spiceLevel = {
                     in: spiceLevels
                 };
@@ -94,7 +102,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 some: {
                     OR: preferences.contentWarnings.map(warning => ({
                         name: {
-                            contains: warning,
+                            contains: warning.split('(')[0].trim(),
                             mode: 'insensitive'
                         }
                     }))
@@ -109,7 +117,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     some: {
                         OR: preferences.excludedWarnings.map(warning => ({
                             name: {
-                                contains: warning,
+                                contains: warning.split('(')[0].trim(),
                                 mode: 'insensitive'
                             }
                         }))
@@ -135,14 +143,14 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         if (books.length === 0) {
             console.log('API route: No books found with strict matching, trying more lenient query');
             
-            // Create a more lenient query by removing some constraints
-            const lenientQuery = { ...queryConditions };
+            // Create a more lenient query with only rating constraint
+            const lenientQuery = {
+                rating: {
+                    gte: 3.5,
+                    lte: 5
+                }
+            };
             
-            // Remove content warnings and tags constraints
-            delete lenientQuery.contentWarnings;
-            delete lenientQuery.tags;
-            
-            // Keep spice level and rating constraints
             books = await prisma.book.findMany({
                 where: lenientQuery,
                 include: {
