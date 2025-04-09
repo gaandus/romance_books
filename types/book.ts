@@ -14,20 +14,15 @@ export interface Book {
     id: string;
     title: string;
     authorScraped: string | null;
-    url: string;
-    rating: number;
-    numRatings: number;
-    spiceLevel: string | null;
-    summary: string;
-    tags: Tag[];
-    contentWarnings: ContentWarning[];
     seriesName: string | null;
     seriesNumber: number | null;
-    pages: number | null;
-    publishedDate: Date | null;
-    scrapedStatus: string | null;
-    createdAt: Date;
-    updatedAt: Date;
+    rating: number;
+    numRatings: number;
+    spiceLevel: string;
+    summary: string;
+    url: string;
+    tags: Tag[];
+    contentWarnings: ContentWarning[];
 }
 
 export interface Message {

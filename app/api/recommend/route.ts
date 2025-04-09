@@ -364,23 +364,33 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
         // Transform books to match the expected format
         console.log('API route: Transforming books');
-        const transformedBooks = books.map((book: any) => {
-            const transformed = {
-                id: book.id,
-                title: book.title,
-                author: book.authorScraped,
-                rating: book.rating,
-                numRatings: book.numRatings,
-                spiceLevel: book.spiceLevel,
-                summary: book.summary,
-                url: book.url,
-                tags: book.tags,
-                contentWarnings: book.contentWarnings,
-                series: book.seriesName,
-                seriesNumber: book.seriesNumber
-            };
-            return transformed;
-        });
+        const mappedBooks = books.map((book: {
+            id: string;
+            title: string;
+            authorScraped: string | null;
+            seriesName: string | null;
+            seriesNumber: number | null;
+            rating: number | null;
+            numRatings: number | null;
+            spiceLevel: string | null;
+            summary: string | null;
+            url: string;
+            tags: any[];
+            contentWarnings: any[];
+        }) => ({
+            id: book.id,
+            title: book.title,
+            authorScraped: book.authorScraped || 'Unknown Author',
+            seriesName: book.seriesName,
+            seriesNumber: book.seriesNumber,
+            rating: book.rating || 0,
+            numRatings: book.numRatings || 0,
+            spiceLevel: book.spiceLevel || 'Not Rated',
+            summary: book.summary || 'No summary available',
+            url: book.url,
+            tags: book.tags,
+            contentWarnings: book.contentWarnings
+        }));
 
         // Return the response
         console.log('API route: Returning response');
@@ -388,8 +398,8 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             status: 200,
             message: 'Success',
             data: {
-                books: transformedBooks,
-                total: transformedBooks.length,
+                books: mappedBooks,
+                total: mappedBooks.length,
                 hasMore: false
             }
         });
