@@ -100,11 +100,10 @@ export default function ChatMessage({
                             <CardContent className="flex-1 py-2 sm:py-3 px-2 sm:px-4">
                                 <div className="space-y-1.5 sm:space-y-2">
                                     <div className="flex flex-col gap-1">
-                                        <h3 className="font-semibold text-lg">{book.title}</h3>
                                         <p className="text-sm text-gray-600">{book.authorScraped || 'Unknown Author'}</p>
                                         {book.seriesName && (
                                             <p className="text-sm text-gray-500">
-                                                {book.seriesName}{book.seriesNumber ? ` #${book.seriesNumber}` : ''}
+                                                {book.seriesName}
                                             </p>
                                         )}
                                     </div>
