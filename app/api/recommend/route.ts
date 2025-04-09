@@ -140,7 +140,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                             some: {
                                 AND: preferences.genres.map(genre => ({
                                     name: {
-                                        startsWith: genre.split('(')[0].trim(),
+                                        contains: genre.split('(')[0].trim(),
                                         mode: 'insensitive'
                                     }
                                 }))
@@ -258,7 +258,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 ...(preferences.genres && preferences.genres.length > 0 ? {
                     tags: {
                         some: {
-                            OR: preferences.genres.map(genre => ({
+                            AND: preferences.genres.map(genre => ({
                                 name: {
                                     contains: genre.split('(')[0].trim(),
                                     mode: 'insensitive'
