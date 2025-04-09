@@ -81,7 +81,7 @@ export default function ChatMessage({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-6">
                     {books.map((book) => (
                         <Card key={book.id} className="flex flex-col hover:shadow-lg transition-shadow duration-200">
-                            <CardHeader className="pb-1 sm:pb-2 px-2 sm:px-4">
+                            <CardHeader className="pb-0 sm:pb-1 px-2 sm:px-4">
                                 <div className="flex items-start justify-between gap-2">
                                     <CardTitle className="text-sm sm:text-lg font-semibold line-clamp-2 break-words">
                                         {book.title}
@@ -97,7 +97,7 @@ export default function ChatMessage({
                                     </a>
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex-1 py-2 sm:py-3 px-2 sm:px-4">
+                            <CardContent className="flex-1 pt-1 sm:pt-2 pb-2 sm:pb-3 px-2 sm:px-4">
                                 <div className="space-y-1.5 sm:space-y-2">
                                     <div className="flex flex-col gap-1">
                                         <p className="text-sm text-gray-600">{book.authorScraped || 'Unknown Author'}</p>

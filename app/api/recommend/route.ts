@@ -136,16 +136,16 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                         }
                     }),
                     ...(preferences.genres && preferences.genres.length > 0 ? {
-                        tags: {
-                            some: {
-                                AND: preferences.genres.map(genre => ({
+                        AND: preferences.genres.map(genre => ({
+                            tags: {
+                                some: {
                                     name: {
                                         contains: genre.split('(')[0].trim(),
                                         mode: 'insensitive'
                                     }
-                                }))
+                                }
                             }
-                        }
+                        }))
                     } : {}),
                     ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                         contentWarnings: {
@@ -256,16 +256,16 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     }
                 }),
                 ...(preferences.genres && preferences.genres.length > 0 ? {
-                    tags: {
-                        some: {
-                            AND: preferences.genres.map(genre => ({
+                    OR: preferences.genres.map(genre => ({
+                        tags: {
+                            some: {
                                 name: {
                                     contains: genre.split('(')[0].trim(),
                                     mode: 'insensitive'
                                 }
-                            }))
+                            }
                         }
-                    }
+                    }))
                 } : {}),
                 ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                     contentWarnings: {

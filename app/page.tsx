@@ -109,8 +109,8 @@ export default function Home() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    message: "",  // Empty message to skip OpenAI analysis
+                body: JSON.stringify({ 
+                    message: messages[messages.length - 1]?.message || "",  // Use the last message
                     readBooks: [...readBooks, bookId],
                     notInterestedBooks,
                     previouslySeenBooks: messages.flatMap(msg => 
@@ -155,8 +155,8 @@ export default function Home() {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({
-                    message: "",  // Empty message to skip OpenAI analysis
+                body: JSON.stringify({ 
+                    message: messages[messages.length - 1]?.message || "",  // Use the last message
                     readBooks,
                     notInterestedBooks: [...notInterestedBooks, bookId],
                     previouslySeenBooks: messages.flatMap(msg => 
