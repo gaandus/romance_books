@@ -91,63 +91,56 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         });
 
         // Check existing spice levels in the database
-        const existingSpiceLevels = await prisma.book.findMany({
-            select: {
-                spiceLevel: true
-            },
-            distinct: ['spiceLevel'],
-            where: {
-                spiceLevel: {
-                    not: null
+        const existingSpiceLevels = await Promise.race([
+            prisma.book.findMany({
+                select: {
+                    spiceLevel: true
+                },
+                distinct: ['spiceLevel'],
+                where: {
+                    spiceLevel: {
+                        not: null
+                    }
                 }
-            }
-        });
+            }),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Database query timeout')), 5000)
+            )
+        ]);
         console.log('API route: Existing spice levels in database:', existingSpiceLevels.map((b: { spiceLevel: string | null }) => b.spiceLevel));
 
-        let books = await prisma.book.findMany({
-            where: {
-                rating: {
-                    gte: 3.5,
-                    lte: 5
-                },
-                ...(preferences.spiceLevel ? {
-                    spiceLevel: {
-                        in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
-                    }
-                } : {
-                    spiceLevel: {
-                        in: ['1 of 5', '2 of 5', '3 of 5', '4 of 5', '5 of 5']
-                    }
-                }),
-                ...(preferences.genres && preferences.genres.length > 0 ? {
-                    tags: {
-                        some: {
-                            AND: preferences.genres.map(genre => ({
-                                name: {
-                                    startsWith: genre.split('(')[0].trim(),
-                                    mode: 'insensitive'
-                                }
-                            }))
+        let books = await Promise.race([
+            prisma.book.findMany({
+                where: {
+                    rating: {
+                        gte: 3.5,
+                        lte: 5
+                    },
+                    ...(preferences.spiceLevel ? {
+                        spiceLevel: {
+                            in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
                         }
-                    }
-                } : {}),
-                ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
-                    contentWarnings: {
-                        some: {
-                            AND: preferences.contentWarnings.map(warning => ({
-                                name: {
-                                    startsWith: warning.split('(')[0].trim(),
-                                    mode: 'insensitive'
-                                }
-                            }))
+                    } : {
+                        spiceLevel: {
+                            in: ['1 of 5', '2 of 5', '3 of 5', '4 of 5', '5 of 5']
                         }
-                    }
-                } : {}),
-                ...(preferences.excludedWarnings && preferences.excludedWarnings.length > 0 ? {
-                    NOT: {
+                    }),
+                    ...(preferences.genres && preferences.genres.length > 0 ? {
+                        tags: {
+                            some: {
+                                AND: preferences.genres.map(genre => ({
+                                    name: {
+                                        startsWith: genre.split('(')[0].trim(),
+                                        mode: 'insensitive'
+                                    }
+                                }))
+                            }
+                        }
+                    } : {}),
+                    ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                         contentWarnings: {
                             some: {
-                                OR: preferences.excludedWarnings.map(warning => ({
+                                AND: preferences.contentWarnings.map(warning => ({
                                     name: {
                                         startsWith: warning.split('(')[0].trim(),
                                         mode: 'insensitive'
@@ -155,33 +148,50 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                                 }))
                             }
                         }
-                    }
-                } : {}),
-                ...(previouslySeenBooks && previouslySeenBooks.length > 0 ? {
-                    id: {
-                        notIn: previouslySeenBooks
-                    }
-                } : {}),
-                ...(readBooks && readBooks.length > 0 ? {
-                    id: {
-                        notIn: [...(previouslySeenBooks || []), ...readBooks]
-                    }
-                } : {}),
-                ...(notInterestedBooks && notInterestedBooks.length > 0 ? {
-                    id: {
-                        notIn: [...(previouslySeenBooks || []), ...(readBooks || []), ...notInterestedBooks]
-                    }
-                } : {})
-            },
-            include: {
-                contentWarnings: true,
-                tags: true
-            },
-            orderBy: {
-                id: 'asc'
-            },
-            take: MAX_BOOKS_PER_PAGE
-        });
+                    } : {}),
+                    ...(preferences.excludedWarnings && preferences.excludedWarnings.length > 0 ? {
+                        NOT: {
+                            contentWarnings: {
+                                some: {
+                                    OR: preferences.excludedWarnings.map(warning => ({
+                                        name: {
+                                            startsWith: warning.split('(')[0].trim(),
+                                            mode: 'insensitive'
+                                        }
+                                    }))
+                                }
+                            }
+                        }
+                    } : {}),
+                    ...(previouslySeenBooks && previouslySeenBooks.length > 0 ? {
+                        id: {
+                            notIn: previouslySeenBooks
+                        }
+                    } : {}),
+                    ...(readBooks && readBooks.length > 0 ? {
+                        id: {
+                            notIn: [...(previouslySeenBooks || []), ...readBooks]
+                        }
+                    } : {}),
+                    ...(notInterestedBooks && notInterestedBooks.length > 0 ? {
+                        id: {
+                            notIn: [...(previouslySeenBooks || []), ...(readBooks || []), ...notInterestedBooks]
+                        }
+                    } : {})
+                },
+                include: {
+                    contentWarnings: true,
+                    tags: true
+                },
+                orderBy: {
+                    id: 'asc'
+                },
+                take: MAX_BOOKS_PER_PAGE
+            }),
+            new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Database query timeout')), 5000)
+            )
+        ]);
 
         console.log('API route: Found books with strict matching:', books.length);
         console.log('API route: Sample book from database:', {
@@ -267,17 +277,22 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             
             console.log('API route: Less strict query:', JSON.stringify(lessStrictQuery, null, 2));
             
-            books = await prisma.book.findMany({
-                where: lessStrictQuery,
-                include: {
-                    contentWarnings: true,
-                    tags: true
-                },
-                orderBy: {
-                    id: 'asc'
-                },
-                take: MAX_BOOKS_PER_PAGE
-            });
+            books = await Promise.race([
+                prisma.book.findMany({
+                    where: lessStrictQuery,
+                    include: {
+                        contentWarnings: true,
+                        tags: true
+                    },
+                    orderBy: {
+                        id: 'asc'
+                    },
+                    take: MAX_BOOKS_PER_PAGE
+                }),
+                new Promise((_, reject) => 
+                    setTimeout(() => reject(new Error('Database query timeout')), 5000)
+                )
+            ]);
             
             console.log('API route: Found books with less strict matching:', books.length);
         }
