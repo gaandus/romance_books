@@ -61,7 +61,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 console.log('API route: Analyzed preferences:', preferences);
                 
                 // Validate preferences
-                if (!preferences || !preferences.spiceLevel || !Array.isArray(preferences.genres)) {
+                if (!preferences || !Array.isArray(preferences.genres)) {
                     console.error('API route: Invalid preferences returned from OpenAI:', preferences);
                     throw new ApiError('Failed to analyze preferences', 500, 'INVALID_PREFERENCES');
                 }
@@ -183,6 +183,25 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     contentWarnings: true,
                     tags: true
                 },
+                select: {
+                    id: true,
+                    title: true,
+                    authorScraped: true,
+                    seriesName: true,
+                    seriesNumber: true,
+                    rating: true,
+                    numRatings: true,
+                    spiceLevel: true,
+                    summary: true,
+                    url: true,
+                    pageCount: true,
+                    publishedDate: true,
+                    scrapedStatus: true,
+                    createdAt: true,
+                    updatedAt: true,
+                    contentWarnings: true,
+                    tags: true
+                },
                 orderBy: {
                     id: 'asc'
                 },
@@ -197,10 +216,8 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         console.log('API route: Sample book from database:', {
             id: books[0]?.id,
             title: books[0]?.title,
-            author: books[0]?.author,
-            spiceLevel: books[0]?.spiceLevel,
-            tags: books[0]?.tags,
-            contentWarnings: books[0]?.contentWarnings
+            authorScraped: books[0]?.authorScraped,
+            spiceLevel: books[0]?.spiceLevel
         });
 
         // If no books found with strict matching, try less strict matching
@@ -302,12 +319,11 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
         // Transform books to match the expected format
         console.log('API route: Transforming books');
-        console.log('API route: Sample book before transform:', books[0]);
-        const transformedBooks = books.map((book: Book & { tags: Tag[], contentWarnings: ContentWarning[] }) => {
+        const transformedBooks = books.map((book: any) => {
             const transformed = {
                 id: book.id,
                 title: book.title,
-                author: book.author,
+                author: book.authorScraped,
                 rating: book.rating,
                 numRatings: book.numRatings,
                 spiceLevel: book.spiceLevel,
@@ -315,10 +331,9 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 url: book.url,
                 tags: book.tags,
                 contentWarnings: book.contentWarnings,
-                series: book.series,
+                series: book.seriesName,
                 seriesNumber: book.seriesNumber
             };
-            console.log('API route: Transformed book:', transformed);
             return transformed;
         });
 

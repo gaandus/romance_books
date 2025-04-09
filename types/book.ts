@@ -13,7 +13,7 @@ export interface ContentWarning {
 export interface Book {
     id: string;
     title: string;
-    author: string;
+    authorScraped: string | null;
     url: string;
     rating: number;
     numRatings: number;
@@ -21,7 +21,7 @@ export interface Book {
     summary: string;
     tags: Tag[];
     contentWarnings: ContentWarning[];
-    series: string | null;
+    seriesName: string | null;
     seriesNumber: number | null;
     pageCount: number | null;
     publishedDate: Date | null;

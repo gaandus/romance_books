@@ -33,9 +33,9 @@ export default function ChatMessage({
         booksKeys: books?.map(b => ({
             id: b.id,
             title: b.title,
-            author: b.author,
+            authorScraped: b.authorScraped,
             spiceLevel: b.spiceLevel,
-            series: b.series,
+            seriesName: b.seriesName,
             seriesNumber: b.seriesNumber
         }))
     });
@@ -99,11 +99,11 @@ export default function ChatMessage({
                             </CardHeader>
                             <CardContent className="flex-1 py-2 sm:py-3 px-2 sm:px-4">
                                 <div className="space-y-1.5 sm:space-y-2">
-                                    <p className="text-xs sm:text-sm text-muted-foreground break-words">by {book.author}</p>
+                                    <p className="text-xs sm:text-sm text-muted-foreground break-words">by {book.authorScraped}</p>
                                     
-                                    {book.series && (
+                                    {book.seriesName && (
                                         <p className="text-xs sm:text-sm text-muted-foreground break-words">
-                                            Book {book.seriesNumber} in {book.series}
+                                            Book {book.seriesNumber} in {book.seriesName}
                                         </p>
                                     )}
 
