@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import ChatMessage from './components/ChatMessage';
 import { Book } from '@/types/book';
 import { Button } from './components/ui/button';
@@ -92,7 +92,7 @@ export default function Home() {
         }
     };
 
-    const handleMarkAsRead = async (bookId: string) => {
+    const handleMarkAsRead = useCallback(async (bookId: string) => {
         try {
             // Remove the book from display
             setMessages(prev => prev.map(msg => ({
@@ -136,9 +136,9 @@ export default function Home() {
         } catch (error) {
             console.error('Error marking book as read:', error);
         }
-    };
+    }, [messages, readBooks, notInterestedBooks]);
 
-    const handleMarkAsNotInterested = async (bookId: string) => {
+    const handleMarkAsNotInterested = useCallback(async (bookId: string) => {
         try {
             // Remove the book from display
             setMessages(prev => prev.map(msg => ({
@@ -182,7 +182,7 @@ export default function Home() {
         } catch (error) {
             console.error('Error marking book as not interested:', error);
         }
-    };
+    }, [messages, readBooks, notInterestedBooks]);
 
     return (
         <div className="min-h-screen flex flex-col">

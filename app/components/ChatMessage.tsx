@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { Book } from '@/types/book';
 import { Button } from './ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './ui/card';
@@ -14,7 +14,7 @@ interface ChatMessageProps {
     onMarkAsNotInterested: (bookId: string) => void;
 }
 
-export default function ChatMessage({ 
+const ChatMessage = memo(function ChatMessage({ 
     message, 
     books, 
     onMarkAsRead, 
@@ -24,21 +24,23 @@ export default function ChatMessage({
     const [showAllWarnings, setShowAllWarnings] = useState<{ [key: string]: boolean }>({});
     const [showFullSummary, setShowFullSummary] = useState<{ [key: string]: boolean }>({});
 
-    console.log('ChatMessage render:', {
-        message,
-        books,
-        booksLength: books?.length,
-        isArray: Array.isArray(books),
-        firstBook: books?.[0],
-        booksKeys: books?.map(b => ({
-            id: b.id,
-            title: b.title,
-            authorScraped: b.authorScraped,
-            spiceLevel: b.spiceLevel,
-            seriesName: b.seriesName,
-            seriesNumber: b.seriesNumber
-        }))
-    });
+    if (process.env.NODE_ENV === 'development') {
+        console.log('ChatMessage render:', {
+            message,
+            books,
+            booksLength: books?.length,
+            isArray: Array.isArray(books),
+            firstBook: books?.[0],
+            booksKeys: books?.map(b => ({
+                id: b.id,
+                title: b.title,
+                authorScraped: b.authorScraped,
+                spiceLevel: b.spiceLevel,
+                seriesName: b.seriesName,
+                seriesNumber: b.seriesNumber
+            }))
+        });
+    }
 
     if (!Array.isArray(books)) {
         console.error('Books is not an array:', books);
@@ -81,10 +83,15 @@ export default function ChatMessage({
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-6">
                     {books.map((book) => (
                         <Card key={book.id} className="flex flex-col hover:shadow-lg transition-shadow duration-200">
-                            <CardHeader className="pb-0 sm:pb-1 px-2 sm:px-4">
+                            <CardHeader className="pb-0 px-2 sm:px-4">
                                 <div className="flex items-start justify-between gap-2">
                                     <CardTitle className="text-sm sm:text-lg font-semibold line-clamp-2 break-words">
                                         {book.title}
+                                        {book.seriesName && (
+                                            <span className="text-gray-500 font-normal">
+                                                {" ("}{book.seriesName}{")"}
+                                            </span>
+                                        )}
                                     </CardTitle>
                                     <a 
                                         href={book.url} 
@@ -97,15 +104,10 @@ export default function ChatMessage({
                                     </a>
                                 </div>
                             </CardHeader>
-                            <CardContent className="flex-1 pt-1 sm:pt-2 pb-2 sm:pb-3 px-2 sm:px-4">
+                            <CardContent className="flex-1 pt-0 pb-2 sm:pb-3 px-2 sm:px-4">
                                 <div className="space-y-1.5 sm:space-y-2">
                                     <div className="flex flex-col gap-1">
-                                        <p className="text-sm text-gray-600">{book.authorScraped || 'Unknown Author'}</p>
-                                        {book.seriesName && (
-                                            <p className="text-sm text-gray-500">
-                                                {book.seriesName}
-                                            </p>
-                                        )}
+                                        <p className="text-sm text-gray-600">by {book.authorScraped || 'Unknown Author'}</p>
                                     </div>
 
                                     <div className="flex items-center gap-1.5 sm:gap-2">
@@ -210,4 +212,6 @@ export default function ChatMessage({
             )}
         </div>
     );
-} 
+});
+
+export default ChatMessage; 
