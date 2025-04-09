@@ -23,7 +23,7 @@ export interface Book {
     contentWarnings: ContentWarning[];
     seriesName: string | null;
     seriesNumber: number | null;
-    pageCount: number | null;
+    pages: number | null;
     publishedDate: Date | null;
     scrapedStatus: string | null;
     createdAt: Date;
