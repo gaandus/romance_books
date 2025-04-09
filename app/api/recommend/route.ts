@@ -32,7 +32,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         const { message, readBooks = [], notInterestedBooks = [], previouslySeenBooks = [] } = body;
         
         let preferences: {
-            spiceLevel: SpiceLevel;
+            spiceLevel: SpiceLevel | null;
             genres: string[];
             contentWarnings: string[];
             excludedWarnings: string[];
@@ -41,7 +41,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         if (!message) {
             console.log('API route: Empty message, using default preferences');
             preferences = {
-                spiceLevel: 'Medium',
+                spiceLevel: null,
                 genres: [],
                 contentWarnings: [],
                 excludedWarnings: []
@@ -121,19 +121,25 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 }),
                 ...(preferences.genres && preferences.genres.length > 0 ? {
                     tags: {
-                        every: {
-                            name: {
-                                in: preferences.genres.map(genre => genre.split('(')[0].trim())
-                            }
+                        some: {
+                            AND: preferences.genres.map(genre => ({
+                                name: {
+                                    startsWith: genre.split('(')[0].trim(),
+                                    mode: 'insensitive'
+                                }
+                            }))
                         }
                     }
                 } : {}),
                 ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                     contentWarnings: {
-                        every: {
-                            name: {
-                                in: preferences.contentWarnings.map(warning => warning.split('(')[0].trim())
-                            }
+                        some: {
+                            AND: preferences.contentWarnings.map(warning => ({
+                                name: {
+                                    startsWith: warning.split('(')[0].trim(),
+                                    mode: 'insensitive'
+                                }
+                            }))
                         }
                     }
                 } : {}),
@@ -175,6 +181,16 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 id: 'asc'
             },
             take: MAX_BOOKS_PER_PAGE
+        });
+
+        console.log('API route: Found books with strict matching:', books.length);
+        console.log('API route: Sample book from database:', {
+            id: books[0]?.id,
+            title: books[0]?.title,
+            author: books[0]?.author,
+            spiceLevel: books[0]?.spiceLevel,
+            tags: books[0]?.tags,
+            contentWarnings: books[0]?.contentWarnings
         });
 
         // If no books found with strict matching, try less strict matching
