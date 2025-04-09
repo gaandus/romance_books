@@ -121,25 +121,19 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                 }),
                 ...(preferences.genres && preferences.genres.length > 0 ? {
                     tags: {
-                        some: {
-                            AND: preferences.genres.map(genre => ({
-                                name: {
-                                    contains: genre.split('(')[0].trim(),
-                                    mode: 'insensitive'
-                                }
-                            }))
+                        every: {
+                            name: {
+                                in: preferences.genres.map(genre => genre.split('(')[0].trim())
+                            }
                         }
                     }
                 } : {}),
                 ...(preferences.contentWarnings && preferences.contentWarnings.length > 0 ? {
                     contentWarnings: {
-                        some: {
-                            AND: preferences.contentWarnings.map(warning => ({
-                                name: {
-                                    startsWith: warning.split('(')[0].trim(),
-                                    mode: 'insensitive'
-                                }
-                            }))
+                        every: {
+                            name: {
+                                in: preferences.contentWarnings.map(warning => warning.split('(')[0].trim())
+                            }
                         }
                     }
                 } : {}),
@@ -277,18 +271,25 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
 
         // Transform books to match the expected format
         console.log('API route: Transforming books');
-        const transformedBooks = books.map((book: Book & { tags: Tag[], contentWarnings: ContentWarning[] }) => ({
-            id: book.id,
-            title: book.title,
-            author: book.author,
-            rating: book.rating,
-            numRatings: book.numRatings,
-            spiceLevel: book.spiceLevel,
-            summary: book.summary,
-            url: book.url,
-            tags: book.tags,
-            contentWarnings: book.contentWarnings
-        }));
+        console.log('API route: Sample book before transform:', books[0]);
+        const transformedBooks = books.map((book: Book & { tags: Tag[], contentWarnings: ContentWarning[] }) => {
+            const transformed = {
+                id: book.id,
+                title: book.title,
+                author: book.author,
+                rating: book.rating,
+                numRatings: book.numRatings,
+                spiceLevel: book.spiceLevel,
+                summary: book.summary,
+                url: book.url,
+                tags: book.tags,
+                contentWarnings: book.contentWarnings,
+                series: book.series,
+                seriesNumber: book.seriesNumber
+            };
+            console.log('API route: Transformed book:', transformed);
+            return transformed;
+        });
 
         // Return the response
         console.log('API route: Returning response');

@@ -33,7 +33,10 @@ export default function ChatMessage({
         booksKeys: books?.map(b => ({
             id: b.id,
             title: b.title,
-            author: b.author
+            author: b.author,
+            spiceLevel: b.spiceLevel,
+            series: b.series,
+            seriesNumber: b.seriesNumber
         }))
     });
 
