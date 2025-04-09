@@ -17,6 +17,13 @@ const SPICE_LEVEL_MAP = {
 } as const;
 
 type SpiceLevel = keyof typeof SPICE_LEVEL_MAP;
+type UserPreferences = {
+    spiceLevel: SpiceLevel[] | null;
+    genres: string[];
+    contentWarnings: string[];
+    excludedWarnings: string[];
+};
+
 type ScoredBook = {
     book: Book;
     score: number;
@@ -31,12 +38,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         // Extract message from the request
         const { message, readBooks = [], notInterestedBooks = [], previouslySeenBooks = [] } = body;
         
-        let preferences: {
-            spiceLevel: SpiceLevel | null;
-            genres: string[];
-            contentWarnings: string[];
-            excludedWarnings: string[];
-        };
+        let preferences: UserPreferences;
         
         if (!message) {
             console.log('API route: Empty message, using default preferences');
@@ -57,14 +59,22 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     envKeys: Object.keys(process.env)
                 });
                 
-                preferences = await analyzeUserPreferences(message);
-                console.log('API route: Analyzed preferences:', preferences);
+                const analyzedPreferences = await analyzeUserPreferences(message);
+                console.log('API route: Analyzed preferences:', analyzedPreferences);
                 
-                // Validate preferences
-                if (!preferences || !Array.isArray(preferences.genres)) {
-                    console.error('API route: Invalid preferences returned from OpenAI:', preferences);
+                // Validate preferences structure but don't override values
+                if (!analyzedPreferences || !Array.isArray(analyzedPreferences.genres)) {
+                    console.error('API route: Invalid preferences structure returned from OpenAI:', analyzedPreferences);
                     throw new ApiError('Failed to analyze preferences', 500, 'INVALID_PREFERENCES');
                 }
+
+                // Ensure all required fields exist with proper types
+                preferences = {
+                    spiceLevel: Array.isArray(analyzedPreferences.spiceLevel) ? analyzedPreferences.spiceLevel : null,
+                    genres: Array.isArray(analyzedPreferences.genres) ? analyzedPreferences.genres : [],
+                    contentWarnings: Array.isArray(analyzedPreferences.contentWarnings) ? analyzedPreferences.contentWarnings : [],
+                    excludedWarnings: Array.isArray(analyzedPreferences.excludedWarnings) ? analyzedPreferences.excludedWarnings : []
+                };
             } catch (error) {
                 console.error('API route: Error analyzing preferences:', error);
                 if (error instanceof Error) {
@@ -86,7 +96,7 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
         console.log('API route: Querying database with strict matching (AND)');
         console.log('API route: Spice level debug:', {
             requestedLevel: preferences.spiceLevel,
-            mappedLevels: preferences.spiceLevel ? SPICE_LEVEL_MAP[preferences.spiceLevel] : ['Sweet', 'Mild', 'Medium', 'Hot', 'Scorching', 'Inferno'],
+            mappedLevels: preferences.spiceLevel && preferences.spiceLevel.length > 0 ? SPICE_LEVEL_MAP[preferences.spiceLevel[0] as SpiceLevel] : ['1 of 5', '2 of 5', '3 of 5', '4 of 5', '5 of 5'],
             allLevels: Object.keys(SPICE_LEVEL_MAP)
         });
 
@@ -116,9 +126,9 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                         gte: 3.5,
                         lte: 5
                     },
-                    ...(preferences.spiceLevel ? {
+                    ...(preferences.spiceLevel && preferences.spiceLevel.length > 0 ? {
                         spiceLevel: {
-                            in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
+                            in: SPICE_LEVEL_MAP[preferences.spiceLevel[0] as SpiceLevel] || []
                         }
                     } : {
                         spiceLevel: {
@@ -179,10 +189,6 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                         }
                     } : {})
                 },
-                include: {
-                    contentWarnings: true,
-                    tags: true
-                },
                 select: {
                     id: true,
                     title: true,
@@ -199,8 +205,20 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     scrapedStatus: true,
                     createdAt: true,
                     updatedAt: true,
-                    contentWarnings: true,
-                    tags: true
+                    contentWarnings: {
+                        select: {
+                            id: true,
+                            name: true,
+                            count: true
+                        }
+                    },
+                    tags: {
+                        select: {
+                            id: true,
+                            name: true,
+                            count: true
+                        }
+                    }
                 },
                 orderBy: {
                     id: 'asc'
@@ -228,9 +246,9 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
                     gte: 3.5,
                     lte: 5
                 },
-                ...(preferences.spiceLevel ? {
+                ...(preferences.spiceLevel && preferences.spiceLevel.length > 0 ? {
                     spiceLevel: {
-                        in: SPICE_LEVEL_MAP[preferences.spiceLevel] || []
+                        in: SPICE_LEVEL_MAP[preferences.spiceLevel[0] as SpiceLevel] || []
                     }
                 } : {
                     spiceLevel: {
@@ -297,9 +315,36 @@ export async function POST(request: Request): Promise<NextResponse<ApiResponse<R
             books = await Promise.race([
                 prisma.book.findMany({
                     where: lessStrictQuery,
-                    include: {
-                        contentWarnings: true,
-                        tags: true
+                    select: {
+                        id: true,
+                        title: true,
+                        authorScraped: true,
+                        seriesName: true,
+                        seriesNumber: true,
+                        rating: true,
+                        numRatings: true,
+                        spiceLevel: true,
+                        summary: true,
+                        url: true,
+                        pageCount: true,
+                        publishedDate: true,
+                        scrapedStatus: true,
+                        createdAt: true,
+                        updatedAt: true,
+                        contentWarnings: {
+                            select: {
+                                id: true,
+                                name: true,
+                                count: true
+                            }
+                        },
+                        tags: {
+                            select: {
+                                id: true,
+                                name: true,
+                                count: true
+                            }
+                        }
                     },
                     orderBy: {
                         id: 'asc'
