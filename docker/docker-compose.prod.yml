@@ -26,10 +26,6 @@ services:
     image: postgres:16-alpine
     env_file:
       - ../.env.local
-    environment:
-      - POSTGRES_USER
-      - POSTGRES_PASSWORD
-      - POSTGRES_DB
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -63,6 +59,7 @@ networks:
 volumes:
 
   postgres_data:
+
 
 
 
