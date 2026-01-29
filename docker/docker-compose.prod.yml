@@ -23,6 +23,10 @@ services:
       - app-network
     volumes:
       - ../data:/app/data:ro
+      - ../src:/app/src:ro
+      - ../scripts:/app/scripts:ro
+      - ../prisma:/app/prisma:ro
+
 
 
   db:
@@ -64,6 +68,7 @@ networks:
 volumes:
 
   postgres_data:
+
 
 
 
