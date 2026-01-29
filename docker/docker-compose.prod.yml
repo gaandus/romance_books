@@ -6,7 +6,7 @@ services:
       context: ..
       dockerfile: docker/Dockerfile.prod
     ports:
-      - "3003:3000"
+      - "127.0.0.1:18083:3000"
     env_file:
       - ../.env.local
     depends_on:
@@ -24,11 +24,9 @@ services:
 
   db:
     image: postgres:16-alpine
-    ports:
-      - "5432:5432"
     environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_DB=romance_books
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -61,4 +59,5 @@ networks:
     driver: bridge
 
 volumes:
+
   postgres_data:
